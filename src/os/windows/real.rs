@@ -60,7 +60,7 @@ impl WindowData {
     fn new(window: &Window, tx_res: async_channel::Sender<IncompleteResponse>) -> AtomicPtr<Self> {
         let mut data = AtomicPtr::new(Box::into_raw(Box::new(WindowData { tx_res })));
         unsafe {
-            SetWindowLongPtrA(window.handle(), GWLP_USERDATA, *data.get_mut() as _);
+            SetWindowLongPtrA(**window as _, GWLP_USERDATA, *data.get_mut() as _);
         }
 
         data
@@ -70,7 +70,7 @@ impl WindowData {
 pub struct RealWindow {
     caller: Arc<Caller>,
     tr_layouts: Arc<HashMap<String, TrLayout>>,
-    window: Arc<Window>,
+    window: Window,
     _window_data: AtomicPtr<WindowData>,
     rx_res: async_channel::Receiver<IncompleteResponse>,
 }
@@ -90,16 +90,16 @@ impl RealWindow {
 
     pub async fn subscribe(&self, tr_code: &str, data: Vec<String>) -> Result<(), ()> {
         let handle = self.caller.handle().read().await;
-        handle.advise_real_data(self.window.clone(), tr_code, data).await
+        handle.advise_real_data(*self.window, tr_code, data).await
     }
 
     pub async fn unsubscribe(&self, tr_code: &str, data: Vec<String>) -> Result<(), ()> {
         let handle = self.caller.handle().read().await;
-        handle.unadvise_real_data(self.window.clone(), tr_code, data).await
+        handle.unadvise_real_data(*self.window, tr_code, data).await
     }
 
     pub async fn unsubscribe_all(&self) -> Result<(), ()> {
-        self.caller.unadvise_window(self.window.clone()).await
+        self.caller.unadvise_window(*self.window).await
     }
 
     pub async fn recv(&self) -> RealResponse {
@@ -171,6 +171,6 @@ impl RealWindow {
 
 impl Drop for RealWindow {
     fn drop(&mut self) {
-        self.caller.unadvise_window(self.window.clone());
+        self.caller.unadvise_window(*self.window);
     }
 }

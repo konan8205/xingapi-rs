@@ -3,7 +3,7 @@
 // XingAPI 및 Win32 API 함수 호출을 별도의 스레드에서 비동기적으로 대신 수행하고
 // 윈도우 메시지 루프를 반복하는 스레드에 대한 모듈입니다.
 
-use super::{bindings, entry::Entry, window::Window};
+use super::{bindings, entry::Entry};
 use crate::error::{EntryError, Error, Win32Error};
 
 use std::{
@@ -44,20 +44,20 @@ define_fn! {
     DestroyWindow(usize) -> Result<(), Win32Error>
 
     // XingAPI
-    Connect(Arc<Window>, String, u16, Option<i32>, Option<i32>) -> Result<(), Error>
+    Connect(usize, String, u16, Option<i32>, Option<i32>) -> Result<(), Error>
     IsConnected() -> bool
     Disconnect() -> ()
-    Login(Arc<Window>, String, String, String, bool) -> Result<(), Error>
+    Login(usize, String, String, String, bool) -> Result<(), Error>
     Request(
-        Arc<Window>,
+        usize,
         String,
         Vec<u8>,
         Option<String>,
         Option<i32>
     ) -> Result<i32, Error>
-    AdviseRealData(Arc<Window>, String, Vec<String>) -> Result<(), ()>
-    UnadviseRealData(Arc<Window>, String, Vec<String>) -> Result<(), ()>
-    UnadviseWindow(Arc<Window>) -> Result<(), ()>
+    AdviseRealData(usize, String, Vec<String>) -> Result<(), ()>
+    UnadviseRealData(usize, String, Vec<String>) -> Result<(), ()>
+    UnadviseWindow(usize) -> Result<(), ()>
     GetAccountList() -> Vec<String>
     GetAccountName(String) -> String
     GetAccountDetailName(String) -> String
@@ -123,13 +123,13 @@ pub struct CallerHandle {
 impl CallerHandle {
     pub fn connect(
         &self,
-        window: Arc<Window>,
+        hwnd: usize,
         addr: &str,
         port: u16,
         timeout: Option<i32>,
         max_packet_size: Option<i32>,
     ) -> RetFuture<Result<(), Error>> {
-        call!(self, Connect(window, addr, port, timeout, max_packet_size))
+        call!(self, Connect(hwnd, addr, port, timeout, max_packet_size))
     }
 
     pub fn is_connected(&self) -> RetFuture<bool> {
@@ -141,43 +141,43 @@ impl CallerHandle {
 
     pub fn login(
         &self,
-        window: Arc<Window>,
+        hwnd: usize,
         id: &str,
         pw: &str,
         cert_pw: &str,
         cert_err_dialog: bool,
     ) -> RetFuture<Result<(), Error>> {
-        call!(self, Login(window, id, pw, cert_pw, cert_err_dialog))
+        call!(self, Login(hwnd, id, pw, cert_pw, cert_err_dialog))
     }
 
     pub fn request(
         &self,
-        window: Arc<Window>,
+        hwnd: usize,
         tr_code: &str,
         data: Vec<u8>,
         continue_key: Option<&str>,
         timeout: Option<i32>,
     ) -> RetFuture<Result<i32, Error>> {
         let continue_key = continue_key.map(|s| s.to_owned());
-        call!(self, Request(window, tr_code, data, continue_key, timeout))
+        call!(self, Request(hwnd, tr_code, data, continue_key, timeout))
     }
 
     pub fn advise_real_data(
         &self,
-        window: Arc<Window>,
+        hwnd: usize,
         tr_code: &str,
         data: Vec<String>,
     ) -> RetFuture<Result<(), ()>> {
-        call!(self, AdviseRealData(window, tr_code, data))
+        call!(self, AdviseRealData(hwnd, tr_code, data))
     }
 
     pub fn unadvise_real_data(
         &self,
-        window: Arc<Window>,
+        hwnd: usize,
         tr_code: &str,
         data: Vec<String>,
     ) -> RetFuture<Result<(), ()>> {
-        call!(self, UnadviseRealData(window, tr_code, data))
+        call!(self, UnadviseRealData(hwnd, tr_code, data))
     }
 
     pub fn get_account_list(&self) -> RetFuture<Vec<String>> {
@@ -233,8 +233,8 @@ impl Caller {
         call!(self, DestroyWindow(hwnd))
     }
 
-    pub fn unadvise_window(&self, window: Arc<Window>) -> RetFuture<Result<(), ()>> {
-        call!(self, UnadviseWindow(window))
+    pub fn unadvise_window(&self, hwnd: usize) -> RetFuture<Result<(), ()>> {
+        call!(self, UnadviseWindow(hwnd))
     }
 
     pub fn is_caller_thread() -> bool {
@@ -377,11 +377,10 @@ impl Caller {
 
             // XingAPI
             CallerFn::Connect {
-                args: (window, addr, port, timeout, max_packet_size),
+                args: (hwnd, addr, port, timeout, max_packet_size),
                 tx_ret,
                 waker,
             } => {
-                let hwnd = window.handle();
                 ret!(tx_ret, waker, entry.connect(hwnd, &addr, port, timeout, max_packet_size))
             }
             CallerFn::IsConnected { args: (), tx_ret, waker } => {
@@ -390,27 +389,25 @@ impl Caller {
             CallerFn::Disconnect { args: (), tx_ret, waker } => {
                 ret!(tx_ret, waker, entry.disconnect())
             }
-            CallerFn::Login { args: (window, id, pw, cert_pw, cert_err_dialog), tx_ret, waker } => {
-                let hwnd = window.handle();
+            CallerFn::Login { args: (hwnd, id, pw, cert_pw, cert_err_dialog), tx_ret, waker } => {
                 ret!(tx_ret, waker, entry.login(hwnd, &id, &pw, &cert_pw, cert_err_dialog))
             }
             CallerFn::Request {
-                args: (window, tr_code, data, continue_key, timeout),
+                args: (hwnd, tr_code, data, continue_key, timeout),
                 tx_ret,
                 waker,
             } => {
-                let hwnd = window.handle();
                 let ret = entry.request(hwnd, &tr_code, &data, continue_key.as_deref(), timeout);
                 ret!(tx_ret, waker, ret)
             }
-            CallerFn::AdviseRealData { args: (window, tr_code, data), tx_ret, waker } => {
-                ret!(tx_ret, waker, entry.advise_real_data(window.handle(), &tr_code, &data))
+            CallerFn::AdviseRealData { args: (hwnd, tr_code, data), tx_ret, waker } => {
+                ret!(tx_ret, waker, entry.advise_real_data(hwnd, &tr_code, &data))
             }
-            CallerFn::UnadviseRealData { args: (window, tr_code, data), tx_ret, waker } => {
-                ret!(tx_ret, waker, entry.unadvise_real_data(window.handle(), &tr_code, &data))
+            CallerFn::UnadviseRealData { args: (hwnd, tr_code, data), tx_ret, waker } => {
+                ret!(tx_ret, waker, entry.unadvise_real_data(hwnd, &tr_code, &data))
             }
-            CallerFn::UnadviseWindow { args: (window,), tx_ret, waker } => {
-                ret!(tx_ret, waker, entry.unadvise_window(window.handle()))
+            CallerFn::UnadviseWindow { args: (hwnd,), tx_ret, waker } => {
+                ret!(tx_ret, waker, entry.unadvise_window(hwnd))
             }
             CallerFn::GetAccountList { args: (), tx_ret, waker } => {
                 ret!(tx_ret, waker, entry.get_account_list())

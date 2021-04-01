@@ -59,7 +59,7 @@ impl WindowData {
         let data = RwLock::new(WindowData::empty());
         let mut ptr = AtomicPtr::new(Box::into_raw(Box::new(data)));
         unsafe {
-            SetWindowLongPtrA(window.handle(), GWLP_USERDATA, *ptr.get_mut() as _);
+            SetWindowLongPtrA(**window as _, GWLP_USERDATA, *ptr.get_mut() as _);
         }
 
         ptr
@@ -68,7 +68,7 @@ impl WindowData {
 
 pub struct SessionWindow {
     caller: Arc<Caller>,
-    window: Arc<Window>,
+    window: Window,
     window_data: AtomicPtr<RwLock<WindowData>>,
 }
 
@@ -88,7 +88,7 @@ impl SessionWindow {
         max_packet_size: Option<i32>,
     ) -> Result<(), Error> {
         let handle = self.caller.handle().write().await;
-        handle.connect(self.window.clone(), addr, port, timeout, max_packet_size).await
+        handle.connect(*self.window, addr, port, timeout, max_packet_size).await
     }
 
     pub async fn login(
@@ -105,7 +105,7 @@ impl SessionWindow {
         *window_data.write().await =
             WindowData { tx_login_res: Some(tx_on_login), rx_login_res: Some(rx_on_login) };
 
-        handle.login(self.window.clone(), id, pw, cert_pw, cert_err_dialog).await?;
+        handle.login(*self.window, id, pw, cert_pw, cert_err_dialog).await?;
         let result = {
             let window_data = window_data.read().await;
             window_data.rx_login_res.as_ref().unwrap().recv().await.unwrap()

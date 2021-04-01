@@ -235,7 +235,7 @@ impl Entry {
 
     pub fn connect(
         &self,
-        hwnd: HWND,
+        hwnd: usize,
         addr: &str,
         port: u16,
         timeout: Option<i32>,
@@ -243,7 +243,7 @@ impl Entry {
     ) -> Result<(), Error> {
         unsafe {
             if (self.connect)(
-                hwnd,
+                hwnd as _,
                 euckr::encode(addr).as_ptr(),
                 port as _,
                 XM_OFFSET as _,
@@ -280,7 +280,7 @@ impl Entry {
 
     pub fn login(
         &self,
-        hwnd: HWND,
+        hwnd: usize,
         id: &str,
         pw: &str,
         cert_pw: &str,
@@ -288,7 +288,7 @@ impl Entry {
     ) -> Result<(), Error> {
         unsafe {
             if (self.login)(
-                hwnd,
+                hwnd as _,
                 euckr::encode(id).as_ptr(),
                 euckr::encode(pw).as_ptr(),
                 euckr::encode(cert_pw).as_ptr(),
@@ -322,7 +322,7 @@ impl Entry {
 
     pub fn request(
         &self,
-        hwnd: HWND,
+        hwnd: usize,
         tr_code: &str,
         data: &[u8],
         continue_key: Option<&str>,
@@ -330,7 +330,7 @@ impl Entry {
     ) -> Result<i32, Error> {
         let req_id = unsafe {
             (self.request)(
-                hwnd,
+                hwnd as _,
                 euckr::encode(tr_code).as_ptr(),
                 data.as_ptr() as *const _,
                 data.len() as _,
@@ -363,7 +363,7 @@ impl Entry {
         unsafe { (self.release_message_data)(lparam) }
     }
 
-    pub fn advise_real_data(&self, hwnd: HWND, tr_code: &str, data: &[String]) -> Result<(), ()> {
+    pub fn advise_real_data(&self, hwnd: usize, tr_code: &str, data: &[String]) -> Result<(), ()> {
         if data.iter().find(|s| !s.is_ascii()).is_some() {
             return Err(());
         }
@@ -373,7 +373,7 @@ impl Entry {
 
         unsafe {
             if (self.advise_real_data)(
-                hwnd,
+                hwnd as _,
                 euckr::encode(tr_code).as_ptr(),
                 euckr::encode(&enc_data).as_ptr(),
                 max_len as _,
@@ -386,7 +386,12 @@ impl Entry {
         }
     }
 
-    pub fn unadvise_real_data(&self, hwnd: HWND, tr_code: &str, data: &[String]) -> Result<(), ()> {
+    pub fn unadvise_real_data(
+        &self,
+        hwnd: usize,
+        tr_code: &str,
+        data: &[String],
+    ) -> Result<(), ()> {
         if data.iter().find(|s| !s.is_ascii()).is_some() {
             return Err(());
         }
@@ -396,7 +401,7 @@ impl Entry {
 
         unsafe {
             if (self.unadvise_real_data)(
-                hwnd,
+                hwnd as _,
                 euckr::encode(tr_code).as_ptr(),
                 euckr::encode(&enc_data).as_ptr(),
                 max_len as _,
@@ -409,7 +414,7 @@ impl Entry {
         }
     }
 
-    pub fn unadvise_window(&self, hwnd: HWND) -> Result<(), ()> {
+    pub fn unadvise_window(&self, hwnd: usize) -> Result<(), ()> {
         // 연결되지 않은 상태에서 함수를 호출하면 예외가 발생할 수 있습니다.
         if !self.is_connected() {
             return Err(());
@@ -417,7 +422,7 @@ impl Entry {
 
         unsafe {
             // 반환형은 BOOL이지만 에러 코드를 반환하기도 합니다.
-            if (self.unadvise_window)(hwnd) > 0 {
+            if (self.unadvise_window)(hwnd as _) > 0 {
                 Ok(())
             } else {
                 Err(())

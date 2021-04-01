@@ -98,7 +98,7 @@ impl WindowData {
         })));
 
         unsafe {
-            SetWindowLongPtrA(window.handle(), GWLP_USERDATA, *data.get_mut() as _);
+            SetWindowLongPtrA(**window as _, GWLP_USERDATA, *data.get_mut() as _);
         }
 
         data
@@ -108,7 +108,7 @@ impl WindowData {
 pub struct QueryWindow {
     caller: Arc<Caller>,
     tr_layouts: Arc<HashMap<String, TrLayout>>,
-    window: Arc<Window>,
+    window: Window,
     window_data: AtomicPtr<WindowData>,
 }
 
@@ -137,7 +137,7 @@ impl QueryWindow {
         let tr_code = &data.code;
         let req_id = handle
             .request(
-                self.window.clone(),
+                *self.window,
                 tr_code,
                 data::encode(&self.tr_layouts, &data)?,
                 continue_key,
