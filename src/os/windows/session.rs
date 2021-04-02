@@ -12,7 +12,7 @@ use crate::{
     response::LoginResponse,
 };
 
-use async_channel::{Receiver, Sender};
+use async_channel::Sender;
 use async_lock::RwLock;
 use lazy_static::lazy_static;
 use std::{
