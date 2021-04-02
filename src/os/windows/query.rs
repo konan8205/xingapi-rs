@@ -148,10 +148,11 @@ impl QueryWindow {
 
         let (tx_res, rx_res) = async_channel::bounded(1);
 
-        let mut tx_res_ref = self.tx_res(req_id).lock().await;
-        assert!(tx_res_ref.is_none());
-        *tx_res_ref.deref_mut() = Some(tx_res);
-        drop(tx_res_ref);
+        {
+            let mut tx_res_ref = self.tx_res(req_id).lock().await;
+            assert!(tx_res_ref.is_none());
+            *tx_res_ref.deref_mut() = Some(tx_res);
+        }
 
         if let Some(res) = rx_res.recv().await.unwrap() {
             let data = if res.data_recv {
@@ -189,7 +190,7 @@ impl QueryWindow {
                 0
             }
             XM_RECEIVE_DATA | XM_TIMEOUT => {
-                Self::handle_xingapi_msg(hwnd, msg, wparam, lparam);
+                Self::on_recv_msg(hwnd, msg, wparam, lparam);
                 0
             }
             _ => DefWindowProcA(hwnd, msg, wparam, lparam),
@@ -197,19 +198,19 @@ impl QueryWindow {
     }
 
     #[inline(always)]
-    fn handle_xingapi_msg(hwnd: HWND, msg: UINT, wparam: WPARAM, lparam: LPARAM) {
+    fn on_recv_msg(hwnd: HWND, msg: UINT, wparam: WPARAM, lparam: LPARAM) {
         let window_data = unsafe {
             let ptr = GetWindowLongPtrA(hwnd, GWLP_USERDATA) as *mut WindowData;
             assert_ne!(ptr, std::ptr::null_mut());
             &mut *ptr
         };
 
-        macro_rules! acquire_tx_res {
-            ($window_data:ident, $req_id:ident) => {
+        macro_rules! take_tx_res {
+            ($req_id:ident) => {
                 loop {
-                    if let Some(tx) = $window_data.tx_res_map[$req_id as usize].try_lock() {
+                    if let Some(mut tx) = window_data.tx_res_map[$req_id as usize].try_lock() {
                         if tx.is_some() {
-                            break tx;
+                            break tx.take().unwrap();
                         }
                     }
                     std::hint::spin_loop();
@@ -289,8 +290,7 @@ impl QueryWindow {
                     }
                     4 => {
                         let res = window_data.res_map[req_id as usize].take().unwrap();
-                        let tx_res = acquire_tx_res!(window_data, req_id).take().unwrap();
-                        let _ = tx_res.try_send(Some(res));
+                        let _ = take_tx_res!(req_id).try_send(Some(res));
 
                         caller.entry().release_request_data(req_id);
                     }
@@ -299,10 +299,9 @@ impl QueryWindow {
             }
             XM_TIMEOUT => {
                 let req_id = lparam as i32;
-                let tx_res = acquire_tx_res!(window_data, req_id).take().unwrap();
 
                 window_data.res_map[req_id as usize] = None;
-                let _ = tx_res.try_send(None);
+                let _ = take_tx_res!(req_id).try_send(None);
             }
             _ => unreachable!(),
         }

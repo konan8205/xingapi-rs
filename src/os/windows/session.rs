@@ -49,13 +49,12 @@ lazy_static! {
 }
 
 struct WindowData {
-    tx_login_res: Option<Sender<Option<LoginResponse>>>,
-    rx_login_res: Option<Receiver<Option<LoginResponse>>>,
+    tx_res: Option<Sender<Option<LoginResponse>>>,
 }
 
 impl WindowData {
     fn empty() -> Self {
-        WindowData { tx_login_res: None, rx_login_res: None }
+        WindowData { tx_res: None }
     }
 
     fn new(window: &Window) -> AtomicPtr<RwLock<Self>> {
@@ -104,15 +103,11 @@ impl SessionWindow {
         let handle = self.caller.handle().write().await;
         let window_data = unsafe { &mut *self.window_data.load(Ordering::Relaxed) };
 
-        let (tx_on_login, rx_on_login) = async_channel::unbounded();
-        *window_data.write().await =
-            WindowData { tx_login_res: Some(tx_on_login), rx_login_res: Some(rx_on_login) };
+        let (tx_res, rx_res) = async_channel::unbounded();
+        *window_data.write().await = WindowData { tx_res: Some(tx_res) };
 
         handle.login(*self.window, id, pw, cert_pw, cert_err_dialog).await?;
-        let result = {
-            let window_data = window_data.read().await;
-            window_data.rx_login_res.as_ref().unwrap().recv().await.unwrap()
-        };
+        let result = rx_res.recv().await.unwrap();
 
         *window_data.write().await = WindowData::empty();
 
@@ -140,7 +135,7 @@ impl SessionWindow {
                 0
             }
             XM_DISCONNECT | XM_LOGIN | XM_LOGOUT => {
-                Self::handle_xingapi_msg(hwnd, msg, wparam, lparam);
+                Self::on_recv_msg(hwnd, msg, wparam, lparam);
                 0
             }
             _ => DefWindowProcA(hwnd, msg, wparam, lparam),
@@ -148,7 +143,7 @@ impl SessionWindow {
     }
 
     #[inline(always)]
-    fn handle_xingapi_msg(hwnd: HWND, msg: UINT, wparam: WPARAM, lparam: LPARAM) {
+    fn on_recv_msg(hwnd: HWND, msg: UINT, wparam: WPARAM, lparam: LPARAM) {
         let window_data_lock = unsafe {
             let ptr = GetWindowLongPtrA(hwnd, GWLP_USERDATA) as *const RwLock<WindowData>;
             assert_ne!(ptr, std::ptr::null());
@@ -164,12 +159,12 @@ impl SessionWindow {
 
         match msg {
             XM_DISCONNECT => {
-                if let Some(tx) = &window_data.tx_login_res {
+                if let Some(tx) = &window_data.tx_res {
                     let _ = tx.try_send(None);
                 }
             }
             XM_LOGIN => {
-                if let Some(tx) = &window_data.tx_login_res {
+                if let Some(tx) = &window_data.tx_res {
                     let code = unsafe { euckr::decode_ptr(wparam as *const u8) };
                     let message = unsafe { euckr::decode_ptr(lparam as *const u8) };
                     let _ = tx.try_send(Some(LoginResponse::new(&code, &message)));
