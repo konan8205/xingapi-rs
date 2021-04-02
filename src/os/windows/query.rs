@@ -20,6 +20,7 @@ use lazy_static::lazy_static;
 use std::{
     collections::HashMap,
     ops::DerefMut,
+    panic::{RefUnwindSafe, UnwindSafe},
     sync::{
         atomic::{AtomicPtr, Ordering},
         Arc, Weak,
@@ -307,3 +308,6 @@ impl QueryWindow {
         }
     }
 }
+
+impl UnwindSafe for QueryWindow {}
+impl RefUnwindSafe for QueryWindow {}

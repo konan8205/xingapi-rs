@@ -9,6 +9,7 @@ use crate::error::{EntryError, Error, Win32Error};
 use std::{
     future::Future,
     mem::MaybeUninit,
+    panic::{RefUnwindSafe, UnwindSafe},
     path::Path,
     pin::Pin,
     sync::{
@@ -452,6 +453,9 @@ impl Drop for Caller {
         self.join_handle.take().unwrap().join().unwrap();
     }
 }
+
+impl UnwindSafe for Caller {}
+impl RefUnwindSafe for Caller {}
 
 #[cfg(test)]
 mod tests {

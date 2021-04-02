@@ -15,9 +15,12 @@ use crate::{
 use async_channel::{Receiver, Sender};
 use async_lock::RwLock;
 use lazy_static::lazy_static;
-use std::sync::{
-    atomic::{AtomicPtr, Ordering},
-    Arc,
+use std::{
+    panic::{RefUnwindSafe, UnwindSafe},
+    sync::{
+        atomic::{AtomicPtr, Ordering},
+        Arc,
+    },
 };
 
 use bindings::{
@@ -177,3 +180,6 @@ impl SessionWindow {
         }
     }
 }
+
+impl UnwindSafe for SessionWindow {}
+impl RefUnwindSafe for SessionWindow {}
