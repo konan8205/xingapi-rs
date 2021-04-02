@@ -415,11 +415,6 @@ impl Entry {
     }
 
     pub fn unadvise_window(&self, hwnd: usize) -> Result<(), ()> {
-        // 연결되지 않은 상태에서 함수를 호출하면 예외가 발생할 수 있습니다.
-        if !self.is_connected() {
-            return Err(());
-        }
-
         unsafe {
             // 반환형은 BOOL이지만 에러 코드를 반환하기도 합니다.
             if (self.unadvise_window)(hwnd as _) > 0 {
