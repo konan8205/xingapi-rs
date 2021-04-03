@@ -1,6 +1,6 @@
 [package]
 name = "xingapi-res"
-version = "0.2.5"
+version = "0.2.6"
 authors = ["Shinwoo Park <natural7530@gmail.com>"]
 edition = "2018"
 description = "XingAPI RES parser with serde support"

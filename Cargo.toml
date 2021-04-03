@@ -1,6 +1,6 @@
 [package]
 name = "xingapi"
-version = "0.2.5"
+version = "0.2.6"
 authors = ["Shinwoo Park <natural7530@gmail.com>"]
 edition = "2018"
 description = "XingAPI library that supports async/await syntax and multithreading"
@@ -21,7 +21,7 @@ crossbeam-channel = "0.5"
 encoding_rs = { version = "0.8", features = ["fast-hangul-encode"] }
 lazy_static = "1.4"
 libloading = "0.7"
-xingapi-res = { version = "=0.2.5", path = "./res" }
+xingapi-res = { path = "./res", version = "=0.2.6" }
 
 serde = { version = "1.0", features = ["derive"], optional = true }
 
