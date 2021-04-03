@@ -20,7 +20,15 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: doc
-          args: --target i686-pc-windows-msvc --workspace --no-deps --all-features
+          args: |
+            --target i686-pc-windows-msvc
+            --workspace
+            --no-deps
+            --all-features
+      - uses: actions/upload-artifact@v2
+        with:
+          name: doc_i686-pc-windows-msvc
+          path: target/i686-pc-windows-msvc/doc
 
   x86_64-unknown-linux-gnu:
     runs-on: ubuntu-latest
@@ -35,4 +43,12 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: doc
-          args: --target x86_64-unknown-linux-gnu --workspace --no-deps --all-features
+          args: |
+            --target x86_64-unknown-linux-gnu
+            --workspace
+            --no-deps
+            --all-features
+      - uses: actions/upload-artifact@v2
+        with:
+          name: doc_x86_64-unknown-linux-gnu
+          path: target/x86_64-unknown-linux-gnu/doc
