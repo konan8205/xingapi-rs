@@ -3,7 +3,6 @@
 use std::{fs::OpenOptions, path::PathBuf};
 
 use clap::{Clap, ValueHint};
-use xingapi_res::TrLayout;
 
 #[derive(Clap)]
 struct Opts {
