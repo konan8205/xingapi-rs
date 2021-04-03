@@ -7,7 +7,7 @@ on:
     branches: [ master ]
 
 jobs:
-  windows-stable:
+  windows:
     runs-on: windows-latest
 
     steps:
@@ -25,25 +25,7 @@ jobs:
             --package xingapi-res
             --features xingapi-res/serde
 
-  windows-nightly:
-    runs-on: windows-latest
-
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: nightly
-          target: i686-pc-windows-msvc
-          override: true
-      - uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: |
-            --target i686-pc-windows-msvc
-            --package xingapi-res
-            --features xingapi-res/serde
-
-  linux-stable:
+  linux:
     runs-on: ubuntu-latest
 
     steps:
@@ -51,24 +33,6 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
-          target: x86_64-unknown-linux-gnu
-          override: true
-      - uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: |
-            --target x86_64-unknown-linux-gnu
-            --package xingapi-res
-            --features xingapi-res/serde
-
-  linux-nightly:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: nightly
           target: x86_64-unknown-linux-gnu
           override: true
       - uses: actions-rs/cargo@v1
