@@ -1,0 +1,44 @@
+name: build-res
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  windows-stable:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: i686-pc-windows-msvc
+          override: true
+      - uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: |
+            --target i686-pc-windows-msvc
+            --package xingapi-res
+            --features xingapi-res/serde
+
+  windows-nightly:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          target: i686-pc-windows-msvc
+          override: true
+      - uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: |
+            --target i686-pc-windows-msvc
+            --package xingapi-res
+            --features xingapi-res/serde
