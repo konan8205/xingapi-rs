@@ -2,14 +2,11 @@
 
 [![][xingapi-crate-img]][xingapi-crate]
 [![][xingapi-docs-rs-img]][xingapi-docs-rs]
-[![][build-workflow-img]][build-workflow]
 
 [xingapi-crate]: https://crates.io/crates/xingapi
 [xingapi-docs-rs]: https://docs.rs/xingapi/
-[build-workflow]: https://github.com/konan8205/xingapi-rs/actions
 [xingapi-crate-img]: https://img.shields.io/crates/v/xingapi.svg?style=flat-square
 [xingapi-docs-rs-img]: https://img.shields.io/docsrs/xingapi?style=flat-square
-[build-workflow-img]: https://img.shields.io/github/workflow/status/konan8205/xingapi-rs/build?style=flat-square
 
 async/await 문법과 멀티스레딩을 지원하는 XingAPI 라이브러리입니다.
 
