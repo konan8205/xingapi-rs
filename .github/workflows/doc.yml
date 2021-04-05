@@ -24,7 +24,7 @@ jobs:
             --target i686-pc-windows-msvc
             --workspace
             --no-deps
-            --all-features
+            --features doc_cfg,xingapi-res/doc_cfg
       - uses: actions/upload-artifact@v2
         with:
           name: doc_i686-pc-windows-msvc
@@ -47,7 +47,7 @@ jobs:
             --target x86_64-unknown-linux-gnu
             --workspace
             --no-deps
-            --all-features
+            --features doc_cfg,xingapi-res/doc_cfg
       - uses: actions/upload-artifact@v2
         with:
           name: doc_x86_64-unknown-linux-gnu
