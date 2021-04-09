@@ -40,8 +40,8 @@ version = "0.1.0"
 edition = "2018"
 
 [dependencies]
-async-std = { version = "1.9", features = ["attributes"] }
 clap = "3.0.0-beta.2"
+tokio = { version = "1", features = ["macros", "rt-multi-thread"]}
 xingapi = "0.2"
 ```
 
@@ -66,7 +66,7 @@ struct Opts {
     pw: String,
 }
 
-#[async_std::main]
+#[tokio::main]
 async fn main() {
     let opts = Opts::parse();
     let xingapi = XingApi::new().await.unwrap();
