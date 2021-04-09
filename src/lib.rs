@@ -5,21 +5,14 @@
 //! This document was written almost in Korean because it is based on a service provided by Korea
 //! Securities for users who can read Korean.
 //!
-//! 이 라이브러리는 다음의 주안점에 기초하여 제작되었습니다.
-//!
-//! - 비동기 함수 제공을 통한 직관적인 비동기 처리
-//! - 데이터 및 I/O에 대한 고성능 처리
-//! - 간편하고 쉬운 사용
-//!
-//! 라이브러리의 구현에 Rust 언어를 사용하게 된 결정적인 이유는 강력한 동시성 제어와 비동기 함수
-//! 지원 때문입니다. C++도 C++20 버전부터 비동기 함수를 지원하기 시작했지만, 이를 지원하는
-//! 라이브러리가 전무합니다.
-//!
 //! # Requirements
 //! - 이베스트투자증권에서 회원들에게 제공하는 윈도우용 XingAPI 최신 버전
 //! - TR에 필요한 RES (TR 레이아웃) 파일. DevCenter 프로그램에서 전부 다운로드 받을 수 있습니다.
 //! - 비동기 함수를 실행하기 위한 실행자. 이를 위한 라이브러리로는 [async_std][async-std-docs],
 //!   [futures][futures-docs], [tokio][tokio-docs] 등이 있습니다.
+//!
+//! async_std보다는 tokio runtime을 사용할 것을 추천합니다. async_std에는 실행자가 종료될 때
+//! 서브 스레드를 안전하게 종료하도록 대기하는 기능이 없습니다.
 //!
 //! XingAPI에는 리눅스 버전도 있지만 아직은 윈도우 32비트 버전의 XingAPI만 지원합니다.
 //!
@@ -53,7 +46,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-/// 이베스트투자증권 계좌 정보입니다.
+/// 이베스트투자증권 계좌를 저장하는 객체입니다.
 pub struct Account {
     /// 계좌번호
     pub code: String,
@@ -83,7 +76,9 @@ impl XingApiBuilder {
         self
     }
 
-    /// XingAPI에서 사용될 RES 데이터를 지정합니다.
+    /// XingAPI에서 사용될 RES 데이터를 지정합니다. RES 데이터는 TR 레이아웃을 나타냅니다.
+    ///
+    /// RES 데이터가 지정되지 않은 경우 기본 경로에서 불러옵니다.
     pub fn layouts<I>(mut self, layouts: I) -> Self
     where
         I: IntoIterator<Item = TrLayout>,
@@ -92,6 +87,7 @@ impl XingApiBuilder {
         self
     }
 
+    /// `XingApi` 객체를 생성합니다. 
     pub async fn build(self) -> Result<Arc<XingApi>, Error> {
         Ok(Arc::new(XingApi(self.0.build().await?)))
     }
@@ -99,15 +95,20 @@ impl XingApiBuilder {
 
 /// XingAPI를 비동기 함수로 추상화한 객체입니다.
 ///
-/// `connect()`, `disconnect()`, `login()`과 같은 연결 및 로그인 함수를 호출할 경우, 다른 함수의
-/// 호출이 완료될 때까지 대기하고, 동시에 호출되는 다른 함수의 호출을 일시적으로 대기시킵니다.
+/// `connect()`, `login()`과 같은 연결 및 로그인 함수를 호출할 경우, 다른 함수의 호출이 완료될
+/// 때까지 대기하고, 동시에 호출되는 다른 함수의 호출을 일시적으로 대기시킵니다.
+///
+/// **이 객체는 소멸자가 반드시 호출되어야 합니다.** 소멸자 호출 없이 프로그램이 종료될 경우,
+/// 비정상적으로 종료될 수 있습니다. Rust에서는 메인 스레드가 종료될 경우 서브 스레드가 자원 해제
+/// 없이 곧바로 종료된다는 것에 유의해야 합니다.
+///
 #[cfg(any(windows, doc))]
 #[cfg_attr(feature = "doc_cfg", doc(cfg(windows)))]
 pub struct XingApi(#[cfg(windows)] Arc<imp::XingApi>);
 
 #[cfg(any(windows, doc))]
 impl XingApi {
-    /// 기본적인 설정으로 XingAPI를 불러옵니다.
+    /// 기본적인 설정으로 객체를 초기화합니다
     pub async fn new() -> Result<Arc<Self>, Error> {
         #[cfg(not(windows))]
         unimplemented!();
@@ -116,7 +117,7 @@ impl XingApi {
         Ok(Arc::new(Self(imp::XingApi::new().await?)))
     }
 
-    /// 해당하는 주소로 서버에 연결합니다.
+    /// 해당하는 설정으로 서버에 연결합니다.
     pub async fn connect(
         &self,
         addr: &str,
@@ -131,7 +132,7 @@ impl XingApi {
         self.0.connect(addr, port, timeout, max_packet_size).await
     }
 
-    /// 서버에 연결되어 있는지에 대한 여부를 반환합니다
+    /// 서버 연결 여부를 반환합니다
     pub async fn is_connected(&self) -> bool {
         #[cfg(not(windows))]
         unimplemented!();
@@ -256,8 +257,8 @@ impl XingApi {
 /// `connect()`, `disconnect()`, `login()`과 같은 연결 및 로그인 함수를 호출하면 기존에 등록된 TR은
 /// 모두 사라지게 됩니다.
 ///
-/// 실시간 TR을 등록하면 수신받은 TR은 내부적으로 큐에 저장되며 `recv()`를 호출하여 반드시 처리해야
-/// 합니다. 그렇지 않으면 메모리 누수가 발생할 것입니다.
+/// 실시간 TR을 등록하면 수신받은 TR은 내부적으로 큐에 저장되며 이를 처리하지 않을 경우 메모리
+/// 누수로 이어집니다. 따라서 `Real::recv()`를 호출하여 수신받은 TR을 반드시 처리해야 합니다.
 #[cfg(any(windows, doc))]
 #[cfg_attr(feature = "doc_cfg", doc(cfg(windows)))]
 pub struct Real(#[cfg(windows)] imp::Real, Arc<XingApi>);
