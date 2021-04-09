@@ -65,7 +65,7 @@ struct Opts {
     code: String,
 }
 
-#[async_std::main]
+#[tokio::main]
 async fn main() {
     lazy_static! {
         static ref QUIT: AtomicBool = AtomicBool::new(false);
@@ -110,7 +110,7 @@ async fn main() {
     while !QUIT.load(Ordering::Relaxed) {
         let real = real.clone();
         let recv_timeout =
-            async_std::future::timeout(Duration::from_millis(10), async move { real.recv().await });
+            tokio::time::timeout(Duration::from_millis(10), async move { real.recv().await });
 
         if let Ok(res) = recv_timeout.await {
             let data = res.data().unwrap();

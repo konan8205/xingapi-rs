@@ -20,7 +20,7 @@ struct Opts {
     pw: String,
 }
 
-#[async_std::main]
+#[tokio::main]
 async fn main() {
     let opts = Opts::parse();
     let xingapi = XingApi::new().await.unwrap();
@@ -44,7 +44,7 @@ async fn main() {
 
     let xingapi_clone = xingapi.clone();
 
-    let t1101_loop = async_std::task::spawn(async move {
+    let t1101_loop = tokio::spawn(async move {
         let xingapi = xingapi_clone;
 
         let data = Data {
@@ -65,7 +65,7 @@ async fn main() {
                     Err(err) => {
                         if err.kind() == ErrorKind::LimitReached {
                             println!("t1101: limit reached");
-                            async_std::task::sleep(Duration::from_millis(5)).await;
+                            tokio::time::sleep(Duration::from_millis(5)).await;
                             continue;
                         }
                     }
@@ -82,14 +82,14 @@ async fn main() {
 
             let wait_duration = Duration::from_secs_f32(1.0 / t1101_one_sec_limit as f32);
             if wait_duration > elapsed {
-                async_std::task::sleep(wait_duration - elapsed).await;
+                tokio::time::sleep(wait_duration - elapsed).await;
             }
         }
     });
 
     let xingapi_clone = xingapi.clone();
 
-    let t1764_loop = async_std::task::spawn(async move {
+    let t1764_loop = tokio::spawn(async move {
         let xingapi = xingapi_clone;
 
         let data = Data {
@@ -111,7 +111,7 @@ async fn main() {
                     Err(err) => {
                         if err.kind() == ErrorKind::LimitReached {
                             println!("t1764: limit reached");
-                            async_std::task::sleep(Duration::from_millis(5)).await;
+                            tokio::time::sleep(Duration::from_millis(5)).await;
                             continue;
                         }
                     }
@@ -125,12 +125,12 @@ async fn main() {
             println!("t1764: index: {}, elapsed: {} ms", i, res.elapsed().as_millis());
 
             let wait_duration = Duration::from_secs_f32(1.0 / t1764_one_sec_limit as f32);
-            async_std::task::sleep(wait_duration).await;
+            tokio::time::sleep(wait_duration).await;
         }
     });
 
-    t1101_loop.await;
-    t1764_loop.await;
+    t1101_loop.await.unwrap();
+    t1764_loop.await.unwrap();
 
     xingapi.disconnect().await;
     println!("server disconnected");

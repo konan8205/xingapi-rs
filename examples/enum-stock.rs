@@ -18,7 +18,7 @@ struct Opts {
     pw: String,
 }
 
-#[async_std::main]
+#[tokio::main]
 async fn main() {
     let opts = Opts::parse();
     let xingapi = XingApi::new().await.unwrap();
