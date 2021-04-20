@@ -2,9 +2,9 @@ name: build
 
 on:
   push:
-    branches: [ master ]
+    branches: [master]
   pull_request:
-    branches: [ master ]
+    branches: [master]
 
 jobs:
   windows:
@@ -20,7 +20,10 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --target i686-pc-windows-msvc
+          args: |
+            --workspace
+            --features serde,xingapi-res/serde
+            --target i686-pc-windows-msvc
 
   linux:
     runs-on: ubuntu-latest
@@ -35,4 +38,7 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --target x86_64-unknown-linux-gnu
+          args: |
+            --workspace
+            --features serde,xingapi-res/serde
+            --target x86_64-unknown-linux-gnu
