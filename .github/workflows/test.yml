@@ -13,6 +13,8 @@ jobs:
     steps:
       - name: checkout xingapi
         uses: actions/checkout@v2
+        with:
+          path: ./xingapi-rs
 
       - name: checkout xingapi-sdk (windows branch)
         uses: actions/checkout@v2
@@ -57,6 +59,7 @@ jobs:
             --workspace
             --tests
             --all-features
+            --manifest-path ./xingapi-rs/Cargo.toml
 
       - name: test xingapi
         uses: actions-rs/cargo@v1
@@ -66,5 +69,6 @@ jobs:
             --target i686-pc-windows-msvc
             --workspace
             --all-features
+            --manifest-path ./xingapi-rs/Cargo.toml
             --
             --test-threads 1
