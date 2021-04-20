@@ -25,6 +25,7 @@ jobs:
             --workspace
             --no-deps
             --features doc_cfg,xingapi-res/doc_cfg
+            --features serde,xingapi-res/serde
       - uses: actions/upload-artifact@v2
         with:
           name: doc_i686-pc-windows-msvc
@@ -48,6 +49,7 @@ jobs:
             --workspace
             --no-deps
             --features doc_cfg,xingapi-res/doc_cfg
+            --features serde,xingapi-res/serde
       - uses: actions/upload-artifact@v2
         with:
           name: doc_x86_64-unknown-linux-gnu
