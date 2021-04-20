@@ -9,7 +9,7 @@ license = "MPL-2.0"
 include = ["/src/**/*.rs", "/LICENSE", "/README.md"]
 
 [package.metadata.docs.rs]
-features = ["doc_cfg"]
+features = ["doc_cfg", "serde"]
 default-target = "i686-pc-windows-msvc"
 targets = ["i686-pc-windows-msvc", "i686-pc-windows-gnu"]
 
