@@ -2,8 +2,8 @@
 
 //! XingAPI library that supports async/await syntax and multithreading.
 //!
-//! This document was written almost in Korean because it is based on a service provided by Korea
-//! Securities for users who can read Korean.
+//! This document was written almost in Korean because it is based on a service provided by
+//! Korea Securities for users who can read Korean.
 //!
 //! # Requirements
 //! - 이베스트투자증권에서 회원들에게 제공하는 윈도우용 XingAPI 최신 버전
@@ -87,7 +87,7 @@ impl XingApiBuilder {
         self
     }
 
-    /// `XingApi` 객체를 생성합니다. 
+    /// `XingApi` 객체를 생성합니다.
     pub async fn build(self) -> Result<Arc<XingApi>, Error> {
         Ok(Arc::new(XingApi(self.0.build().await?)))
     }
@@ -101,7 +101,6 @@ impl XingApiBuilder {
 /// **이 객체는 소멸자가 반드시 호출되어야 합니다.** 소멸자 호출 없이 프로그램이 종료될 경우,
 /// 비정상적으로 종료될 수 있습니다. Rust에서는 메인 스레드가 종료될 경우 서브 스레드가 자원 해제
 /// 없이 곧바로 종료된다는 것에 유의해야 합니다.
-///
 #[cfg(any(windows, doc))]
 #[cfg_attr(feature = "doc_cfg", doc(cfg(windows)))]
 pub struct XingApi(#[cfg(windows)] Arc<imp::XingApi>);
@@ -254,8 +253,8 @@ impl XingApi {
 
 /// 실시간 TR를 수신하는 리시버입니다.
 ///
-/// `connect()`, `disconnect()`, `login()`과 같은 연결 및 로그인 함수를 호출하면 기존에 등록된 TR은
-/// 모두 사라지게 됩니다.
+/// `connect()`, `disconnect()`, `login()`과 같은 연결 및 로그인 함수를 호출하면 기존에 등록된
+/// TR은 모두 사라지게 됩니다.
 ///
 /// 실시간 TR을 등록하면 수신받은 TR은 내부적으로 큐에 저장되며 이를 처리하지 않을 경우 메모리
 /// 누수로 이어집니다. 따라서 `Real::recv()`를 호출하여 수신받은 TR을 반드시 처리해야 합니다.
