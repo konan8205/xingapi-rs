@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
-use std::str::CharIndices;
+use std::{cell::RefCell, str::CharIndices};
 
 #[derive(PartialEq, Copy, Clone, Debug)]
 pub struct Position {
@@ -18,27 +18,34 @@ impl Position {
 }
 
 pub trait Read<'a> {
-    fn get_symbol(&mut self) -> Option<&'a str>;
-    fn next_symbol(&mut self) -> Option<&'a str>;
+    fn get_symbol(&self) -> Option<&'a str>;
+    fn next_symbol(&self) -> Option<&'a str>;
     fn position(&self) -> Position;
 }
 
 pub struct StrRead<'a> {
     string: &'a str,
+    state: RefCell<StrReadState<'a>>,
+}
+
+pub struct StrReadState<'a> {
     iter: CharIndices<'a>,
     latest_offset: usize,
 }
 
 impl<'a> StrRead<'a> {
     pub fn new(string: &'a str) -> Self {
-        Self { string, iter: string.char_indices(), latest_offset: 0 }
+        Self {
+            string,
+            state: RefCell::new(StrReadState { iter: string.char_indices(), latest_offset: 0 }),
+        }
     }
 
-    fn skip_until_not_whitespace(&mut self) -> Option<()> {
-        while let Some((_, ch)) = self.iter.clone().next() {
+    fn skip_until_not_whitespace(state: &mut StrReadState) -> Option<()> {
+        while let Some((_, ch)) = state.iter.clone().next() {
             match ch {
                 ' ' | '\t' | '\r' | '\n' => {
-                    self.iter.next().unwrap();
+                    state.iter.next().unwrap();
                 }
                 _ => {
                     return Some(());
@@ -49,12 +56,12 @@ impl<'a> StrRead<'a> {
         None
     }
 
-    fn skip_until_not_comment(&mut self) -> Option<()> {
-        while let Some((_, ch)) = self.iter.next() {
+    fn skip_until_not_comment(state: &mut StrReadState) -> Option<()> {
+        while let Some((_, ch)) = state.iter.next() {
             if ch == '*' {
-                if let Some((_, ch)) = self.iter.clone().next() {
+                if let Some((_, ch)) = state.iter.clone().next() {
                     if ch == '/' {
-                        self.iter.next().unwrap();
+                        state.iter.next().unwrap();
                         return Some(());
                     }
                 }
@@ -66,43 +73,44 @@ impl<'a> StrRead<'a> {
 }
 
 impl<'a> Read<'a> for StrRead<'a> {
-    fn get_symbol(&mut self) -> Option<&'a str> {
-        let iter = self.iter.clone();
+    fn get_symbol(&self) -> Option<&'a str> {
+        let iter = self.state.borrow().iter.clone();
         let symbol = self.next_symbol();
-        self.iter = iter;
+        self.state.borrow_mut().iter = iter;
 
         symbol
     }
 
-    fn next_symbol(&mut self) -> Option<&'a str> {
-        self.skip_until_not_whitespace()?;
+    fn next_symbol(&self) -> Option<&'a str> {
+        let state = &mut *self.state.borrow_mut();
 
-        self.latest_offset = self.iter.clone().next()?.0;
-        let mut start_idx = self.latest_offset;
+        StrRead::skip_until_not_whitespace(state)?;
+        state.latest_offset = state.iter.clone().next()?.0;
+        let mut start_idx = state.latest_offset;
         let mut end_idx = self.string.len();
 
-        while let Some((idx, ch)) = self.iter.clone().next() {
+        while let Some((idx, ch)) = state.iter.clone().next() {
             match ch {
                 '\r' | '\n' => {
                     if idx == start_idx {
-                        self.skip_until_not_whitespace()?;
-                        self.latest_offset = self.iter.clone().next()?.0;
-                        start_idx = self.latest_offset;
+                        StrRead::skip_until_not_whitespace(state)?;
+                        state.latest_offset = state.iter.clone().next()?.0;
+                        start_idx = state.latest_offset;
                     } else {
                         end_idx = idx;
                         break;
                     }
                 }
                 '/' => {
-                    if let Some((_, ch2)) = self.iter.clone().skip(1).next() {
+                    if let Some((_, ch2)) = state.iter.clone().skip(1).next() {
                         if ch2 == '*' {
                             if idx == start_idx {
-                                self.iter.next().unwrap();
-                                self.iter.next().unwrap();
-                                self.skip_until_not_comment()?;
+                                state.iter.next().unwrap();
+                                state.iter.next().unwrap();
+                                StrRead::skip_until_not_comment(state)?;
 
-                                self.latest_offset = self.iter.clone().next()?.0;
-                                start_idx = self.latest_offset;
+                                state.latest_offset = state.iter.clone().next()?.0;
+                                start_idx = state.latest_offset;
                                 continue;
                             } else {
                                 end_idx = idx;
@@ -111,12 +119,12 @@ impl<'a> Read<'a> for StrRead<'a> {
                         }
                     }
 
-                    self.iter.next().unwrap();
+                    state.iter.next().unwrap();
                 }
                 ',' | ';' => {
                     if idx == start_idx {
-                        self.iter.next().unwrap();
-                        end_idx = if let Some((idx2, _)) = self.iter.clone().next() {
+                        state.iter.next().unwrap();
+                        end_idx = if let Some((idx2, _)) = state.iter.clone().next() {
                             idx2
                         } else {
                             self.string.len()
@@ -128,7 +136,7 @@ impl<'a> Read<'a> for StrRead<'a> {
                     break;
                 }
                 _ => {
-                    self.iter.next().unwrap();
+                    state.iter.next().unwrap();
                 }
             }
         }
@@ -137,11 +145,13 @@ impl<'a> Read<'a> for StrRead<'a> {
     }
 
     fn position(&self) -> Position {
+        let state = &*self.state.borrow();
+
         let mut pos = Position { line: 1, column: 1 };
         let mut iter = self.string.char_indices();
 
         while let Some((idx, ch)) = iter.next() {
-            if idx >= self.latest_offset {
+            if idx >= state.latest_offset {
                 break;
             }
 
