@@ -1,32 +1,42 @@
 // SPDX-License-Identifier: MIT
 
-use std::{fs::OpenOptions, path::PathBuf};
+use clap::{App, Arg, ValueHint};
+use std::{error::Error, fs::OpenOptions};
 
-use clap::{Clap, ValueHint};
+fn main() -> Result<(), Box<dyn Error>> {
+    let matches = App::new("json")
+        .arg(
+            Arg::new("input")
+                .short('i')
+                .long("input")
+                .takes_value(true)
+                .value_hint(ValueHint::DirPath),
+        )
+        .arg(Arg::new("output").required(true).takes_value(true))
+        .arg(Arg::new("pretty").short('p').long("pretty"))
+        .get_matches();
 
-#[derive(Clap)]
-struct Opts {
-    #[clap(short, parse(from_os_str), value_hint = ValueHint::DirPath)]
-    input: Option<PathBuf>,
-    #[clap(short, parse(from_os_str), value_hint = ValueHint::DirPath)]
-    output: PathBuf,
-}
+    let input = matches.value_of("input");
+    let output = matches.value_of("output").unwrap();
+    let pretty = matches.is_present("pretty");
 
-fn main() {
-    let opts = Opts::parse();
-    let tr_layouts = if let Some(path) = opts.input {
+    let tr_layouts = if let Some(path) = input {
         xingapi_res::load_from_path(path)
     } else {
         xingapi_res::load()
-    }
-    .unwrap();
+    }?;
 
     let mut res_files = tr_layouts.keys().collect::<Vec<_>>();
     res_files.sort();
-    println!("res files loaded: {:?}", res_files);
+    println!("loaded: {:?}", res_files);
 
-    let file = OpenOptions::new().write(true).create_new(true).open(&opts.output).unwrap();
-    serde_json::to_writer_pretty(&file, &tr_layouts).unwrap();
+    let file = OpenOptions::new().write(true).create_new(true).open(output)?;
+    if pretty {
+        serde_json::to_writer_pretty(&file, &tr_layouts)?;
+    } else {
+        serde_json::to_writer(&file, &tr_layouts)?;
+    }
+    println!("json dumped: {:?}", output);
 
-    println!("json dumped: {:?}", opts.output);
+    Ok(())
 }

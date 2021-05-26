@@ -20,8 +20,12 @@ regex = "1"
 serde = { version = "1.0", features = ["derive"], optional = true }
 
 [dev-dependencies]
-clap = "3.0.0-beta.2"
 serde_json = { version = "1.0", features = ["preserve_order"] }
+
+[dev-dependencies.clap]
+version = "3.0.0-beta.2"
+default-features = false
+features = ["std"]
 
 [features]
 default = []
