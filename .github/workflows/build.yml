@@ -85,6 +85,8 @@ jobs:
           override: true
 
       - uses: actions-rs/cargo@v1
+        env:
+          RUSTFLAGS: -A dead_code -A unused_imports
         with:
           command: build
           args: |
