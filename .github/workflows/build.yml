@@ -11,30 +11,79 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
+      - name: checkout xingapi
+        uses: actions/checkout@v2
         with:
-          toolchain: stable
+          path: ./xingapi-rs
+
+      - name: checkout xingapi-sdk (windows branch)
+        uses: actions/checkout@v2
+        with:
+          repository: konan8205/xingapi-sdk
+          ref: windows
+          ssh-key: ${{ secrets.SDK_TOKEN }}
+          path: ./xingapi-sdk/windows
+
+      - name: checkout xingapi-sdk (res branch)
+        uses: actions/checkout@v2
+        with:
+          repository: konan8205/xingapi-sdk
+          ref: res
+          ssh-key: ${{ secrets.SDK_TOKEN }}
+          path: ./xingapi-sdk/res
+
+      - run: mkdir -p C:/eBEST/xingAPI
+        shell: bash
+
+      - run: cp -r ./xingapi-sdk/windows/* C:/eBEST/xingAPI
+        shell: bash
+
+      - run: cp -r ./xingapi-sdk/res/* C:/eBEST/xingAPI
+        shell: bash
+
+      - name: setup rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
           target: i686-pc-windows-msvc
           override: true
-      - uses: actions-rs/cargo@v1
+
+      - name: build xingapi
+        uses: actions-rs/cargo@v1
         with:
           command: build
           args: |
             --workspace
+            --tests
             --features serde,xingapi-res/serde
             --target i686-pc-windows-msvc
+            --manifest-path ./xingapi-rs/Cargo.toml
+
+      - name: test xingapi
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: |
+            --workspace
+            --tests
+            --features serde,xingapi-res/serde
+            --target i686-pc-windows-msvc
+            --manifest-path ./xingapi-rs/Cargo.toml
+            --
+            --test-threads 1
 
   linux:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v2
+
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           target: x86_64-unknown-linux-gnu
           override: true
+
       - uses: actions-rs/cargo@v1
         with:
           command: build
