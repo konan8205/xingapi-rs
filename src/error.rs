@@ -192,7 +192,7 @@ pub enum EntryError {
     },
     /// 해당 라이브러리가 현재 프로세스에서 이미 사용 중입니다.
     #[cfg(any(windows, doc))]
-    #[cfg_attr(feature = "doc_cfg", doc(cfg(windows)))]
+    #[cfg_attr(doc_cfg, doc(cfg(windows)))]
     LibraryInUse,
 }
 
@@ -228,7 +228,7 @@ impl std::error::Error for EntryError {
 
 /// Win32 API 호출 과정에서 발생한 오류 객체입니다.
 #[cfg(any(windows, doc))]
-#[cfg_attr(feature = "doc_cfg", doc(cfg(windows)))]
+#[cfg_attr(doc_cfg, doc(cfg(windows)))]
 pub struct Win32Error {
     code: u32,
 }

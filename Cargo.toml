@@ -9,9 +9,10 @@ license = "MPL-2.0"
 include = ["/src/**/*.rs", "/LICENSE", "/README.md"]
 
 [package.metadata.docs.rs]
-features = ["doc_cfg", "serde"]
+features = ["serde"]
 default-target = "i686-pc-windows-msvc"
 targets = ["i686-pc-windows-msvc", "i686-pc-windows-gnu"]
+rustdoc-args = ["--cfg=doc_cfg"]
 
 [dependencies]
 array-init = "1.0"
@@ -40,7 +41,6 @@ features = ["minwindef", "ntdef", "windef", "winbase", "winuser", "winnt", "base
 
 [features]
 default = []
-doc_cfg = ["xingapi-res/doc_cfg"]
 simd-accel = ["encoding_rs/simd-accel"]
 
 [workspace]

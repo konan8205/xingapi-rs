@@ -20,7 +20,7 @@
 //! [futures-docs]: https://docs.rs/futures/
 //! [tokio-docs]: https://docs.rs/tokio/
 
-#![cfg_attr(feature = "doc_cfg", feature(doc_cfg))]
+#![cfg_attr(doc_cfg, feature(doc_cfg))]
 
 pub mod data;
 pub mod error;
@@ -60,7 +60,7 @@ pub struct Account {
 
 /// 지정된 설정으로 XingAPI를 불러오기 위한 builder입니다.
 #[cfg(any(windows, doc))]
-#[cfg_attr(feature = "doc_cfg", doc(cfg(windows)))]
+#[cfg_attr(doc_cfg, doc(cfg(windows)))]
 pub struct XingApiBuilder(#[cfg(windows)] imp::XingApiBuilder);
 
 #[cfg(any(windows, doc))]
@@ -102,7 +102,7 @@ impl XingApiBuilder {
 /// 비정상적으로 종료될 수 있습니다. Rust에서는 메인 스레드가 종료될 경우 서브 스레드가 자원 해제
 /// 없이 곧바로 종료된다는 것에 유의해야 합니다.
 #[cfg(any(windows, doc))]
-#[cfg_attr(feature = "doc_cfg", doc(cfg(windows)))]
+#[cfg_attr(doc_cfg, doc(cfg(windows)))]
 pub struct XingApi(#[cfg(windows)] Arc<imp::XingApi>);
 
 #[cfg(any(windows, doc))]
@@ -259,7 +259,7 @@ impl XingApi {
 /// 실시간 TR을 등록하면 수신받은 TR은 내부적으로 큐에 저장되며 이를 처리하지 않을 경우 메모리
 /// 누수로 이어집니다. 따라서 `Real::recv()`를 호출하여 수신받은 TR을 반드시 처리해야 합니다.
 #[cfg(any(windows, doc))]
-#[cfg_attr(feature = "doc_cfg", doc(cfg(windows)))]
+#[cfg_attr(doc_cfg, doc(cfg(windows)))]
 pub struct Real(#[cfg(windows)] imp::Real, Arc<XingApi>);
 
 #[cfg(any(windows, doc))]

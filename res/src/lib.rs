@@ -2,7 +2,7 @@
 
 //! XingAPI의 요청 및 응답 데이터에 대한 레이아웃인 RES 파일에 대한 파서입니다.
 
-#![cfg_attr(feature = "doc_cfg", feature(doc_cfg))]
+#![cfg_attr(doc_cfg, feature(doc_cfg))]
 
 pub mod error;
 mod layout;
@@ -16,7 +16,7 @@ use std::{collections::HashMap, ffi::OsStr, fs, path::Path, thread};
 
 /// 시스템에 설치된 XingAPI의 기본 경로로 TR 레이아웃을 모두 불러옵니다.
 #[cfg(any(windows, doc))]
-#[cfg_attr(feature = "doc_cfg", doc(cfg(windows)))]
+#[cfg_attr(doc_cfg, doc(cfg(windows)))]
 pub fn load() -> Result<HashMap<String, TrLayout>, LoadError> {
     load_from_path(Path::new("C:\\eBEST\\xingAPI\\Res"))
 }
