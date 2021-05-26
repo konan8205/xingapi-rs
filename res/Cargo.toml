@@ -31,5 +31,5 @@ features = ["std"]
 default = []
 
 [[example]]
-name = "json"
+name = "res2json"
 required-features = ["serde"]

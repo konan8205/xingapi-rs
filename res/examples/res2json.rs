@@ -4,7 +4,7 @@ use clap::{App, Arg, ValueHint};
 use std::{error::Error, fs::OpenOptions};
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let matches = App::new("json")
+    let matches = App::new("res2json")
         .arg(
             Arg::new("input")
                 .short('i')
