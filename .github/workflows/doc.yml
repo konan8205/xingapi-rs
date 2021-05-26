@@ -7,7 +7,7 @@ on:
     branches: [master]
 
 jobs:
-  i686-pc-windows-msvc:
+  windows:
     runs-on: windows-latest
 
     steps:
@@ -32,7 +32,7 @@ jobs:
           name: doc_i686-pc-windows-msvc
           path: target/i686-pc-windows-msvc/doc
 
-  x86_64-unknown-linux-gnu:
+  linux:
     runs-on: ubuntu-latest
 
     steps:
