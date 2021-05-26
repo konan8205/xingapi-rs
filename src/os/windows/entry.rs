@@ -18,15 +18,14 @@ use std::{mem::MaybeUninit, path::Path, sync::Mutex};
 
 use bindings::{c_int, c_void, BOOL, FALSE, HWND, LPARAM, TRUE};
 
+// 서버 연결, 로그인
 type Connect = unsafe extern "system" fn(HWND, *const u8, c_int, c_int, c_int, c_int) -> BOOL;
 type IsConnected = unsafe extern "system" fn() -> BOOL;
 type Disconnect = unsafe extern "system" fn() -> BOOL;
 type Login = unsafe extern "system" fn(HWND, *const u8, *const u8, *const u8, c_int, BOOL) -> BOOL;
 type Logout = unsafe extern "system" fn(HWND) -> BOOL;
 
-type GetLastError = unsafe extern "system" fn() -> c_int;
-type GetErrorMessage = unsafe extern "system" fn(c_int, *mut u8, c_int) -> c_int;
-
+// 조회TR
 type Request = unsafe extern "system" fn(
     HWND,
     *const u8,
@@ -39,31 +38,32 @@ type Request = unsafe extern "system" fn(
 type ReleaseRequestData = unsafe extern "system" fn(c_int);
 type ReleaseMessageData = unsafe extern "system" fn(LPARAM);
 
+// 실시간TR
 type AdviseRealData = unsafe extern "system" fn(HWND, *const u8, *const u8, c_int) -> BOOL;
 type UnadviseRealData = unsafe extern "system" fn(HWND, *const u8, *const u8, c_int) -> BOOL;
 type UnadviseWindow = unsafe extern "system" fn(HWND) -> BOOL;
 
+// 계좌
 type GetAccountListCount = unsafe extern "system" fn() -> c_int;
 type GetAccountList = unsafe extern "system" fn(c_int, *mut u8, c_int) -> BOOL;
 type GetAccountName = unsafe extern "system" fn(*const u8, *mut u8, c_int) -> BOOL;
 type GetAccountDetailName = unsafe extern "system" fn(*const u8, *mut u8, c_int) -> BOOL;
 type GetAccountNickname = unsafe extern "system" fn(*const u8, *mut u8, c_int) -> BOOL;
 
-type GetCommMedia = unsafe extern "system" fn(*mut u8);
-type GetEtkMedia = unsafe extern "system" fn(*mut u8);
+// 정보
+type GetLastError = unsafe extern "system" fn() -> c_int;
+type GetErrorMessage = unsafe extern "system" fn(c_int, *mut u8, c_int) -> c_int;
+
 type GetClientIp = unsafe extern "system" fn(*mut u8);
 type GetServerName = unsafe extern "system" fn(*mut u8);
 type GetApiPath = unsafe extern "system" fn(*mut u8);
-
-type GetProcBranchNo = unsafe extern "system" fn(*mut u8);
-type GetUseOverFuture = unsafe extern "system" fn() -> BOOL;
-type GetUseFx = unsafe extern "system" fn() -> BOOL;
 
 type GetTrCountPerSec = unsafe extern "system" fn(*const u8) -> c_int;
 type GetTrCountBaseSec = unsafe extern "system" fn(*const u8) -> c_int;
 type GetTrCountRequest = unsafe extern "system" fn(*const u8) -> c_int;
 type GetTrCountLimit = unsafe extern "system" fn(*const u8) -> c_int;
 
+// 부가기능
 type RequestService = unsafe extern "system" fn(HWND, *const u8, *const u8) -> c_int;
 type RemoveService = unsafe extern "system" fn(HWND, *const u8, *const u8) -> c_int;
 
@@ -72,51 +72,50 @@ type AdviseLinkFromHts = unsafe extern "system" fn(HWND);
 type UnadviseLinkFromHts = unsafe extern "system" fn(HWND);
 
 type Decompress = unsafe extern "system" fn(*const u8, *const u8, c_int) -> c_int;
-type IsChartLib = unsafe extern "system" fn() -> BOOL;
 
 #[allow(dead_code)]
 pub struct Entry {
     _disable_send_sync: *const (),
     lib: Library,
 
+    // 서버 연결, 로그인
     connect: Symbol<Connect>,
     is_connected: Symbol<IsConnected>,
     disconnect: Symbol<Disconnect>,
     login: Symbol<Login>,
     logout: Symbol<Logout>,
 
-    get_last_error: Symbol<GetLastError>,
-    get_error_message: Symbol<GetErrorMessage>,
-
+    // 조회TR
     request: Symbol<Request>,
     release_request_data: Symbol<ReleaseRequestData>,
     release_message_data: Symbol<ReleaseMessageData>,
 
+    // 실시간TR
     advise_real_data: Symbol<AdviseRealData>,
     unadvise_real_data: Symbol<UnadviseRealData>,
     unadvise_window: Symbol<UnadviseWindow>,
 
+    // 계좌
     get_acc_list_count: Symbol<GetAccountListCount>,
     get_acc_list: Symbol<GetAccountList>,
     get_acc_name: Symbol<GetAccountName>,
     get_acc_detail_name: Symbol<GetAccountDetailName>,
     get_acc_nickname: Symbol<GetAccountNickname>,
 
-    get_comm_media: Symbol<GetCommMedia>,
-    get_etk_media: Symbol<GetEtkMedia>,
+    // 정보
     get_client_ip: Symbol<GetClientIp>,
     get_server_name: Symbol<GetServerName>,
     get_api_path: Symbol<GetApiPath>,
 
-    get_proc_branch_no: Symbol<GetProcBranchNo>,
-    get_use_over_future: Symbol<GetUseOverFuture>,
-    get_use_fx: Symbol<GetUseFx>,
+    get_last_error: Symbol<GetLastError>,
+    get_error_message: Symbol<GetErrorMessage>,
 
     get_tr_count_per_sec: Symbol<GetTrCountPerSec>,
     get_tr_count_base_sec: Symbol<GetTrCountBaseSec>,
     get_tr_count_request: Symbol<GetTrCountRequest>,
     get_tr_count_limit: Symbol<GetTrCountLimit>,
 
+    // 부가기능
     request_service: Symbol<RequestService>,
     remove_service: Symbol<RemoveService>,
 
@@ -125,7 +124,6 @@ pub struct Entry {
     unadvise_link_from_hts: Symbol<UnadviseLinkFromHts>,
 
     decompress: Symbol<Decompress>,
-    is_chart_lib: Symbol<IsChartLib>,
 }
 
 #[allow(dead_code)]
@@ -160,54 +158,37 @@ impl Entry {
 
         Ok(Self {
             _disable_send_sync: std::ptr::null(),
-
             connect: load_sym!(b"ETK_Connect")?,
             is_connected: load_sym!(b"ETK_IsConnected")?,
             disconnect: load_sym!(b"ETK_Disconnect")?,
             login: load_sym!(b"ETK_Login")?,
             logout: load_sym!(b"ETK_Logout")?,
-
-            get_last_error: load_sym!(b"ETK_GetLastError")?,
-            get_error_message: load_sym!(b"ETK_GetErrorMessage")?,
-
             request: load_sym!(b"ETK_Request")?,
             release_request_data: load_sym!(b"ETK_ReleaseRequestData")?,
             release_message_data: load_sym!(b"ETK_ReleaseMessageData")?,
-
             advise_real_data: load_sym!(b"ETK_AdviseRealData")?,
             unadvise_real_data: load_sym!(b"ETK_UnadviseRealData")?,
             unadvise_window: load_sym!(b"ETK_UnadviseWindow")?,
-
             get_acc_list_count: load_sym!(b"ETK_GetAccountListCount")?,
             get_acc_list: load_sym!(b"ETK_GetAccountList")?,
             get_acc_name: load_sym!(b"ETK_GetAccountName")?,
             get_acc_detail_name: load_sym!(b"ETK_GetAcctDetailName")?,
             get_acc_nickname: load_sym!(b"ETK_GetAcctNickname")?,
-
-            get_comm_media: load_sym!(b"ETK_GetCommMedia")?,
-            get_etk_media: load_sym!(b"ETK_GetETKMedia")?,
+            get_last_error: load_sym!(b"ETK_GetLastError")?,
+            get_error_message: load_sym!(b"ETK_GetErrorMessage")?,
             get_client_ip: load_sym!(b"ETK_GetClientIP")?,
             get_server_name: load_sym!(b"ETK_GetServerName")?,
             get_api_path: load_sym!(b"ETK_GetAPIPath")?,
-
-            get_proc_branch_no: load_sym!(b"ETK_GetProcBranchNo")?,
-            get_use_over_future: load_sym!(b"ETK_GetUseOverFuture")?,
-            get_use_fx: load_sym!(b"ETK_GetUseFX")?,
-
             get_tr_count_per_sec: load_sym!(b"ETK_GetTRCountPerSec")?,
             get_tr_count_base_sec: load_sym!(b"ETK_GetTRCountBaseSec")?,
             get_tr_count_request: load_sym!(b"ETK_GetTRCountRequest")?,
             get_tr_count_limit: load_sym!(b"ETK_GetTRCountLimit")?,
-
             request_service: load_sym!(b"ETK_RequestService")?,
             remove_service: load_sym!(b"ETK_RemoveService")?,
-
             request_link_to_hts: load_sym!(b"ETK_RequestLinkToHTS")?,
             advise_link_from_hts: load_sym!(b"ETK_AdviseLinkFromHTS")?,
             unadvise_link_from_hts: load_sym!(b"ETK_UnAdviseLinkFromHTS")?,
-
             decompress: load_sym!(b"ETK_Decompress")?,
-            is_chart_lib: load_sym!(b"ETK_IsChartLib")?,
             lib,
         })
     }
@@ -300,23 +281,6 @@ impl Entry {
             } else {
                 Err(self.get_last_error())
             }
-        }
-    }
-
-    pub fn get_last_error(&self) -> Error {
-        let code = unsafe { (self.get_last_error)() };
-        Error::XingApi { code, message: self.get_error_message(code) }
-    }
-
-    pub fn get_error_message(&self, code: i32) -> String {
-        unsafe {
-            let mut buffer = MaybeUninit::<[u8; 1024]>::uninit().assume_init();
-            let len = (self.get_error_message)(code, buffer.as_mut_ptr(), buffer.len() as _);
-            assert!(len >= 0);
-
-            let len = len as usize;
-            assert!(len <= buffer.len());
-            euckr::decode(&buffer[0..len]).to_string()
         }
     }
 
@@ -475,22 +439,6 @@ impl Entry {
         euckr::decode(&buffer).trim_end().to_owned()
     }
 
-    pub fn get_comm_media(&self) -> String {
-        let mut buffer = unsafe { MaybeUninit::<[u8; 64]>::uninit().assume_init() };
-        unsafe {
-            (self.get_comm_media)(buffer.as_mut_ptr());
-        }
-        euckr::decode(&buffer).trim_end().to_owned()
-    }
-
-    pub fn get_etk_media(&self) -> String {
-        let mut buffer = unsafe { MaybeUninit::<[u8; 64]>::uninit().assume_init() };
-        unsafe {
-            (self.get_etk_media)(buffer.as_mut_ptr());
-        }
-        euckr::decode(&buffer).trim_end().to_owned()
-    }
-
     pub fn get_client_ip(&self) -> String {
         let mut buffer = unsafe { MaybeUninit::<[u8; 64]>::uninit().assume_init() };
         unsafe {
@@ -516,34 +464,32 @@ impl Entry {
         euckr::decode(&buffer).trim_end().to_owned()
     }
 
-    pub fn get_proc_branch_no(&self) -> String {
-        let mut buffer = unsafe { MaybeUninit::<[u8; 1024]>::uninit().assume_init() };
+    pub fn get_last_error(&self) -> Error {
+        let code = unsafe { (self.get_last_error)() };
+        Error::XingApi { code, message: self.get_error_message(code) }
+    }
+
+    pub fn get_error_message(&self, code: i32) -> String {
         unsafe {
-            (self.get_proc_branch_no)(buffer.as_mut_ptr());
+            let mut buffer = MaybeUninit::<[u8; 1024]>::uninit().assume_init();
+            let len = (self.get_error_message)(code, buffer.as_mut_ptr(), buffer.len() as _);
+            assert!(len >= 0);
+
+            let len = len as usize;
+            assert!(len <= buffer.len());
+            euckr::decode(&buffer[0..len]).to_string()
         }
-        euckr::decode(&buffer).trim_end().to_owned()
-    }
-
-    pub fn get_use_over_future(&self) -> bool {
-        unsafe { (self.get_use_over_future)() == TRUE }
-    }
-
-    pub fn get_use_fx(&self) -> bool {
-        unsafe { (self.get_use_fx)() == TRUE }
     }
 
     pub fn get_tr_count_per_sec(&self, tr_code: &str) -> i32 {
         unsafe { (self.get_tr_count_per_sec)(euckr::encode(tr_code).as_ptr()) }
     }
-
     pub fn get_tr_count_base_sec(&self, tr_code: &str) -> i32 {
         unsafe { (self.get_tr_count_base_sec)(euckr::encode(tr_code).as_ptr()) }
     }
-
     pub fn get_tr_count_request(&self, tr_code: &str) -> i32 {
         unsafe { (self.get_tr_count_request)(euckr::encode(tr_code).as_ptr()) }
     }
-
     pub fn get_tr_count_limit(&self, tr_code: &str) -> i32 {
         unsafe { (self.get_tr_count_limit)(euckr::encode(tr_code).as_ptr()) }
     }
