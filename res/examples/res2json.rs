@@ -26,9 +26,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         xingapi_res::load()
     }?;
 
-    let mut res_files = tr_layouts.keys().collect::<Vec<_>>();
-    res_files.sort();
-    println!("loaded: {:?}", res_files);
+    println!("loaded: {}", tr_layouts.len());
 
     let file = OpenOptions::new().write(true).create_new(true).open(output)?;
     if pretty {
@@ -36,7 +34,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     } else {
         serde_json::to_writer(&file, &tr_layouts)?;
     }
-    println!("json dumped: {:?}", output);
+
+    println!("json dumped: {}", output);
 
     Ok(())
 }
