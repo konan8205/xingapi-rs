@@ -6,9 +6,9 @@ pub use crate::data::error::{DecodeError, EncodeError};
 
 type ErrorBox = Box<dyn std::error::Error + Send + Sync + 'static>;
 
-/// XingAPI의 에러 종류에 대한 열거형 객체입니다.
+/// XingAPI의 오류 종류에 대한 열거형 객체입니다.
 ///
-/// 자주 발생되는 에러를 좀 더 쉽게 처리할 수 있습니다.
+/// 자주 발생되는 오류를 좀 더 쉽게 처리할 수 있습니다.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum ErrorKind {
     /// 연결 오류
@@ -19,11 +19,11 @@ pub enum ErrorKind {
     LoginRequired,
     /// (공동인증) 로그인 실패
     LoginFailed,
-    /// 유효하지 않은 계좌
+    /// 계좌가 유효하지 않음
     InvalidAccount,
-    /// 유효하지 않은 인수 및 입력
+    /// 인수가 올바르지 않음
     InvalidInput,
-    /// 유효하지 않은 데이터
+    /// 수신 데이터가 올바르지 않음
     InvalidData,
     /// 시간 초과
     TimedOut,
@@ -50,25 +50,25 @@ impl ErrorKind {
     }
 }
 
-/// XingAPI를 사용하면서 발생할 수 있는 모든 에러에 대한 열거형 객체입니다.
+/// 여러 오류에 대한 열거형 객체입니다.
 #[derive(Debug)]
 pub enum Error {
-    /// XingAPI 에러
+    /// XingAPI 오류
     XingApi {
         /// 음수로 표현되는 에러 코드
         code: i32,
         /// 에러 메시지
         message: String,
     },
-    /// 인코딩 에러
+    /// 인코딩 오류
     Encode(EncodeError),
-    /// 디코딩 에러
+    /// 디코딩 오류
     Decode(DecodeError),
-    /// RES 불러오기 에러
+    /// TR 레이아웃 파싱 오류
     Res(xingapi_res::LoadError),
-    /// DLL 불러오기 에러
+    /// DLL 불러오기 오류
     Entry(EntryError),
-    /// 기타 에러
+    /// 기타 오류
     Other(ErrorBox),
     /// 시간 초과
     TimedOut,
@@ -171,26 +171,26 @@ impl std::error::Error for Error {
     }
 }
 
-/// DLL 로드 과정에서 발생한 에러에 대한 객체입니다.
+/// DLL 불러오기 오류에 대한 객체입니다.
 #[derive(Debug)]
 pub enum EntryError {
-    /// 라이브러리 로드 에러
+    /// 라이브러리 불러오기 오류
     Library {
         /// DLL 경로
         path: String,
         /// 에러
         error: libloading::Error,
     },
-    /// 심볼 로드 에러
+    /// 기호 불러오기 오류
     Symbol {
-        /// DLL 심볼
+        /// 기호명
         symbol: String,
         /// DLL 경로
         path: String,
         /// 에러
         error: libloading::Error,
     },
-    /// 해당 라이브러리가 현재 프로세스에서 이미 사용 중입니다.
+    /// 해당 라이브러리가 현재 프로세스에서 이미 사용 중임.
     #[cfg(any(windows, doc))]
     #[cfg_attr(doc_cfg, doc(cfg(windows)))]
     LibraryInUse,
@@ -226,7 +226,7 @@ impl std::error::Error for EntryError {
     }
 }
 
-/// Win32 API 호출 과정에서 발생한 오류 객체입니다.
+/// Win32 API 호출 과정에서 발생하는 오류에 대한 객체입니다.
 #[cfg(any(windows, doc))]
 #[cfg_attr(doc_cfg, doc(cfg(windows)))]
 pub struct Win32Error {
@@ -235,7 +235,7 @@ pub struct Win32Error {
 
 #[cfg(any(windows, doc))]
 impl Win32Error {
-    /// Win32 API 에러 코드를 반환합니다.
+    /// Win32 에러 코드를 반환합니다.
     pub fn code(&self) -> u32 {
         self.code
     }
