@@ -17,10 +17,12 @@ use serde::{Deserialize, Serialize};
 
 /// HashMap을 초기화하는 매크로입니다.
 ///
-/// 들어오는 모든 값은 [Into](Into) 트레이트를 통해 묵시적으로 변환됩니다.
+/// 매크로의 모든 인자는 묵시적으로 변환됩니다.
 ///
 /// ## 예제
 /// ```rust
+/// use std::collections::HashMap;
+///
 /// let block : HashMap<String, String> = hashmap! {
 ///     "shcode" => "096530",
 ///     "gubun" => "0",
@@ -50,17 +52,18 @@ pub enum DataType {
     Output,
 }
 
-/// non-occurs(단일) 및 occurs(배열) block에 대한 enum variant입니다.
+/// 단일 및 배열 블록에 대한 열거형 객체입니다.
 #[derive(Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum Block {
-    /// non-occurs(단일) block
+    /// 단일 블록 (non-occurs)
     Block(HashMap<String, String>),
-    /// occurs(배열) block
+    /// 배열 블록 (occurs)
     Array(Vec<HashMap<String, String>>),
 }
 
 impl Block {
+    /// 단일 블록인지에 대한 여부를 반환합니다.
     pub fn is_block(&self) -> bool {
         match self {
             Self::Block(_) => true,
@@ -68,6 +71,7 @@ impl Block {
         }
     }
 
+    /// 단일 블록인 경우 값에 대한 참조자를 반환힙니다.
     pub fn as_block(&self) -> Option<&HashMap<String, String>> {
         match self {
             Self::Block(block) => Some(block),
@@ -75,6 +79,7 @@ impl Block {
         }
     }
 
+    /// 단일 블록인 경우 값에 대한 가변 참조자를 반환힙니다.
     pub fn as_block_mut(&mut self) -> Option<&mut HashMap<String, String>> {
         match self {
             Self::Block(block) => Some(block),
@@ -82,6 +87,7 @@ impl Block {
         }
     }
 
+    /// 배열 블록인지에 대한 여부를 반환합니다.
     pub fn is_array(&self) -> bool {
         match self {
             Self::Array(_) => true,
@@ -89,6 +95,7 @@ impl Block {
         }
     }
 
+    /// 배열 블록인 경우 값에 대한 참조자를 반환합니다.
     pub fn as_array(&self) -> Option<&Vec<HashMap<String, String>>> {
         match self {
             Self::Array(array) => Some(array),
@@ -96,6 +103,7 @@ impl Block {
         }
     }
 
+    /// 배열 블록인 경우 값에 대한 가변 참조자를 반환합니다.
     pub fn as_array_mut(&mut self) -> Option<&mut Vec<HashMap<String, String>>> {
         match self {
             Self::Array(array) => Some(array),
@@ -126,6 +134,7 @@ pub struct Data {
     pub code: String,
     /// 데이터가 요청인지 응답인지에 대한 여부
     pub data_type: DataType,
+    /// 여러 블록에 대한 해시 테이블
     pub blocks: HashMap<String, Block>,
 }
 
