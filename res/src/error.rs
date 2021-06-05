@@ -35,7 +35,7 @@ impl Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.kind.fmt(f)?;
-        write!(f, "at line {} column {}", self.line, self.column)
+        write!(f, " at line {} column {}", self.line, self.column)
     }
 }
 
@@ -115,13 +115,13 @@ impl fmt::Display for LoadError {
         match self {
             Self::Io(err) => err.fmt(f),
             Self::Decode(path) => {
-                write!(f, "unable to decode file from cp949 to utf-8: {}", path.to_string_lossy())
+                write!(f, "unable to decode file from CP949: {}", path.to_string_lossy())
             }
             Self::Parse(path, err) => {
-                write!(f, "unable to parse file: path: {}, error: {}", path.to_string_lossy(), err)
+                write!(f, "unable to parse file: {}, path: {}", path.to_string_lossy(), err)
             }
             Self::Confilict(res) => {
-                write!(f, "Found two different layouts with a same name: {}", res)
+                write!(f, "found two different layouts with a same name: {}", res)
             }
         }
     }
