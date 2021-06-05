@@ -77,11 +77,17 @@ impl fmt::Display for ErrorKind {
     }
 }
 
-pub(crate) fn unexpected_syntax(reader: &dyn Read) -> Error {
+pub(crate) fn unexpected_syntax<'a, R>(reader: &R) -> Error
+where
+    R: Read<'a>,
+{
     Error::new(&reader.position(), ErrorKind::Syntax).into()
 }
 
-pub(crate) fn unexpected_eof(reader: &dyn Read) -> Error {
+pub(crate) fn unexpected_eof<'a, R>(reader: &R) -> Error
+where
+    R: Read<'a>,
+{
     Error::new(&reader.position(), ErrorKind::Eof).into()
 }
 

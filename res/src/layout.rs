@@ -10,11 +10,17 @@ use std::{convert::AsRef, str::FromStr};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-fn next_symbol<'a>(reader: &dyn Read<'a>) -> Result<&'a str, Error> {
+fn next_symbol<'a, R>(reader: &R) -> Result<&'a str, Error>
+where
+    R: Read<'a>,
+{
     reader.next_symbol().ok_or_else(|| unexpected_eof(reader))
 }
 
-fn get_symbol<'a>(reader: &dyn Read<'a>) -> Result<&'a str, Error> {
+fn get_symbol<'a, R>(reader: &R) -> Result<&'a str, Error>
+where
+    R: Read<'a>,
+{
     reader.get_symbol().ok_or_else(|| unexpected_eof(reader))
 }
 
@@ -91,7 +97,10 @@ pub struct TrLayout {
 }
 
 impl TrLayout {
-    fn from_reader(reader: &mut dyn Read) -> Result<Self, Error> {
+    fn from_reader<'a, R>(reader: &R) -> Result<Self, Error>
+    where
+        R: Read<'a>,
+    {
         let parse_delimiter = |require_next: bool| -> Result<bool, Error> {
             match next_symbol(reader)? {
                 "," => Ok(true),
@@ -106,9 +115,8 @@ impl TrLayout {
             }
         };
 
-        let unexpected_func_param = |reader: &dyn Read| -> Error {
-            Error::new(&reader.position(), ErrorKind::TrParam).into()
-        };
+        let unexpected_func_param =
+            |reader: &R| -> Error { Error::new(&reader.position(), ErrorKind::TrParam).into() };
 
         if next_symbol(reader)? != "BEGIN_FUNCTION_MAP" {
             return Err(unexpected_syntax(reader));
@@ -226,7 +234,7 @@ impl FromStr for TrLayout {
     type Err = Error;
 
     fn from_str(text: &str) -> Result<Self, Self::Err> {
-        Self::from_reader(&mut StrRead::new(text))
+        Self::from_reader(&StrRead::new(text))
     }
 }
 
@@ -272,7 +280,10 @@ pub struct BlockLayout {
 }
 
 impl BlockLayout {
-    fn from_reader(reader: &mut dyn Read, attr: bool) -> Result<Self, Error> {
+    fn from_reader<'a, R>(reader: &R, attr: bool) -> Result<Self, Error>
+    where
+        R: Read<'a>,
+    {
         let parse_delimiter = |require_next: bool| -> Result<bool, Error> {
             match next_symbol(reader)? {
                 "," => Ok(true),
@@ -287,9 +298,8 @@ impl BlockLayout {
             }
         };
 
-        let unexpected_block_param = |reader: &dyn Read| -> Error {
-            Error::new(&reader.position(), ErrorKind::BlockParam).into()
-        };
+        let unexpected_block_param =
+            |reader: &R| -> Error { Error::new(&reader.position(), ErrorKind::BlockParam).into() };
 
         lazy_static! {
             static ref NAME_REGEX: Regex = Regex::new(r"\w*(In|Out)Block\d*").unwrap();
@@ -402,7 +412,10 @@ pub struct FieldLayout {
 }
 
 impl FieldLayout {
-    fn from_reader(reader: &mut dyn Read) -> Result<Self, Error> {
+    fn from_reader<'a, R>(reader: &R) -> Result<Self, Error>
+    where
+        R: Read<'a>,
+    {
         let parse_delimiter = |require_next: bool| -> Result<bool, Error> {
             match next_symbol(reader)? {
                 "," => Ok(true),
@@ -417,9 +430,8 @@ impl FieldLayout {
             }
         };
 
-        let unexpected_field_param = |reader: &dyn Read| -> Error {
-            Error::new(&reader.position(), ErrorKind::FieldParam).into()
-        };
+        let unexpected_field_param =
+            |reader: &R| -> Error { Error::new(&reader.position(), ErrorKind::FieldParam).into() };
 
         let desc = next_symbol(reader)?.to_owned();
         parse_delimiter(true)?;
