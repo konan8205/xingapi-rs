@@ -2,25 +2,26 @@
 
 // 서버 연결 및 로그인 하는 예제입니다.
 
-use clap::{App, Arg};
+use clap::Clap;
 use xingapi::{response::Message, XingApi};
+
+#[derive(Clap)]
+struct Opts {
+    #[clap(short)]
+    id: String,
+    #[clap(short)]
+    pw: String,
+}
 
 #[tokio::main]
 async fn main() {
-    let matches = App::new("login")
-        .arg(Arg::new("id").short('i').long("id").required(true).takes_value(true))
-        .arg(Arg::new("pw").short('p').long("pw").required(true).takes_value(true))
-        .get_matches();
-
-    let id = matches.value_of("id").unwrap();
-    let pw = matches.value_of("pw").unwrap();
-
+    let opts = Opts::parse();
     let xingapi = XingApi::new().await.unwrap();
 
     xingapi.connect("demo.ebestsec.co.kr", 20001, None, None).await.unwrap();
     println!("server connected");
 
-    let login = xingapi.login(&id, &pw, "", false).await.unwrap();
+    let login = xingapi.login(&opts.id, &opts.pw, "", false).await.unwrap();
     println!("login: {:?}", login);
     assert!(login.is_ok());
 

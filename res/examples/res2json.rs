@@ -1,41 +1,30 @@
 // SPDX-License-Identifier: MIT
 
-use clap::{App, Arg, ValueHint};
-use std::{error::Error, fs::OpenOptions};
+use std::{fs::OpenOptions, path::PathBuf};
 
-fn main() -> Result<(), Box<dyn Error>> {
-    let matches = App::new("res2json")
-        .arg(
-            Arg::new("input")
-                .short('i')
-                .long("input")
-                .takes_value(true)
-                .value_hint(ValueHint::DirPath),
-        )
-        .arg(Arg::new("output").required(true).takes_value(true))
-        .arg(Arg::new("pretty").short('p').long("pretty"))
-        .get_matches();
+use clap::{Clap, ValueHint};
 
-    let input = matches.value_of("input");
-    let output = matches.value_of("output").unwrap();
-    let pretty = matches.is_present("pretty");
+#[derive(Clap)]
+struct Opts {
+    #[clap(short, parse(from_os_str), value_hint = ValueHint::DirPath)]
+    input: Option<PathBuf>,
+    #[clap(short, parse(from_os_str), value_hint = ValueHint::DirPath)]
+    output: PathBuf,
+}
 
-    let tr_layouts = if let Some(path) = input {
+fn main() {
+    let opts = Opts::parse();
+    let tr_layouts = if let Some(path) = opts.input {
         xingapi_res::load_from_path(path)
     } else {
         xingapi_res::load()
-    }?;
+    }
+    .unwrap();
 
     println!("loaded: {}", tr_layouts.len());
 
-    let file = OpenOptions::new().write(true).create_new(true).open(output)?;
-    if pretty {
-        serde_json::to_writer_pretty(&file, &tr_layouts)?;
-    } else {
-        serde_json::to_writer(&file, &tr_layouts)?;
-    }
+    let file = OpenOptions::new().write(true).create_new(true).open(&opts.output).unwrap();
+    serde_json::to_writer_pretty(&file, &tr_layouts).unwrap();
 
-    println!("json dumped: {}", output);
-
-    Ok(())
+    println!("json dumped: {}", opts.output.display());
 }
