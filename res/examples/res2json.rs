@@ -8,7 +8,7 @@ use clap::{Clap, ValueHint};
 struct Opts {
     #[clap(short, parse(from_os_str), value_hint = ValueHint::DirPath)]
     input: Option<PathBuf>,
-    #[clap(short, parse(from_os_str), value_hint = ValueHint::DirPath)]
+    #[clap(short, parse(from_os_str), value_hint = ValueHint::FilePath)]
     output: PathBuf,
 }
 
