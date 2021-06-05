@@ -10,6 +10,8 @@ struct Opts {
     input: Option<PathBuf>,
     #[clap(short, parse(from_os_str), value_hint = ValueHint::FilePath)]
     output: PathBuf,
+    #[clap(short)]
+    pretty: bool,
 }
 
 fn main() {
@@ -24,7 +26,11 @@ fn main() {
     println!("loaded: {}", tr_layouts.len());
 
     let file = OpenOptions::new().write(true).create_new(true).open(&opts.output).unwrap();
-    serde_json::to_writer_pretty(&file, &tr_layouts).unwrap();
+    if opts.pretty {
+        serde_json::to_writer_pretty(&file, &tr_layouts).unwrap();
+    } else {
+        serde_json::to_writer(&file, &tr_layouts).unwrap();
+    }
 
     println!("json dumped: {}", opts.output.display());
 }
