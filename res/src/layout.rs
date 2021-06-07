@@ -84,9 +84,9 @@ pub struct TrLayout {
     pub group: Option<u8>,
     /// 헤더 타입
     pub header_type: Option<HeaderType>,
-    /// 입력 block 레이아웃 목록
+    /// 요청 블록 목록
     pub in_blocks: Vec<BlockLayout>,
-    /// 출력 block 레이아웃 목록
+    /// 응답 블록 목록
     pub out_blocks: Vec<BlockLayout>,
 }
 
@@ -222,14 +222,14 @@ impl FromStr for TrLayout {
     }
 }
 
-/// block 타입에 대한 열거형 객체입니다.
+/// 블록 타입에 대한 열거형 객체입니다.
 #[derive(Copy, Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub enum BlockType {
-    /// 입력
+    /// 요청 타입
     #[cfg_attr(feature = "serde", serde(rename = "input"))]
     Input,
-    /// 출력
+    /// 응답 타입
     #[cfg_attr(feature = "serde", serde(rename = "output"))]
     Output,
 }
@@ -245,21 +245,21 @@ impl FromStr for BlockType {
     }
 }
 
-/// block 레이아웃에 대한 추상화 객체입니다.
+/// 블록 레이아웃에 대한 추상화 객체입니다.
 #[derive(Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct BlockLayout {
-    /// block 이름
+    /// 블록 이름
     pub name: String,
-    /// block 설명
+    /// 블록 설명
     pub desc: String,
-    /// block 타입
+    /// 블록 타입
     pub block_type: BlockType,
     /// 배열 여부
     pub occurs: bool,
     /// 각 필드에 attribute byte를 포함한 전체 길이
     pub len: usize,
-    /// field 목록
+    /// 필드 목록
     pub fields: Vec<FieldLayout>,
 }
 
@@ -337,7 +337,7 @@ impl AsRef<BlockLayout> for BlockLayout {
     }
 }
 
-/// field 타입에 대한 열거형 객체입니다.
+/// 필드 타입에 대한 열거형 객체입니다.
 ///
 /// `long`과 `int`는 모두 `FieldType::Int`로 간주됩니다.
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -374,17 +374,17 @@ impl FromStr for FieldType {
     }
 }
 
-/// field 레이아웃에 대한 추상화 객체입니다.
+/// 필드 레이아웃에 대한 추상화 객체입니다.
 #[derive(Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct FieldLayout {
-    /// field 설명
+    /// 필드 설명
     pub desc: String,
-    /// field의 첫 번째 이름
+    /// 필드의 첫 번째 이름
     pub name_old: String,
-    /// field의 두 번째 이름
+    /// 필드의 두 번째 이름
     pub name: String,
-    /// field 타입
+    /// 필드 타입
     pub field_type: FieldType,
     /// attribute byte를 제외한 길이
     pub len: usize,

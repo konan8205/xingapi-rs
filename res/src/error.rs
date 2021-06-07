@@ -52,13 +52,13 @@ pub enum ErrorKind {
     TrParamCount,
     /// TR 인수 오류
     TrParam,
-    /// block 인수 개수 오류
+    /// 블록 인수 개수 오류
     BlockParamCount,
-    /// block 인수 오류
+    /// 블록 인수 오류
     BlockParam,
-    /// field 인수 개수 오류
+    /// 필드 인수 개수 오류
     FieldParamCount,
-    /// field 인수 오류
+    /// 필드 인수 오류
     FieldParam,
 }
 
@@ -96,11 +96,11 @@ where
 pub enum LoadError {
     /// 입출력 오류가 발생했습니다.
     Io(std::io::Error),
-    /// 파일을 CP949에서 UTF-8로 디코딩하지 못했습니다.
+    /// 파일을 CP949에서 디코딩하지 못했습니다.
     Decode(PathBuf),
     /// 파일 파싱에 실패했습니다.
     Parse(PathBuf, Error),
-    /// 코드는 같지만 파싱 결과가 동일하지 않은 여러 파일이 있습니다.
+    /// 코드는 같지만 동일하지 않은 여러 레이아웃 파일이 있습니다.
     Confilict(String),
 }
 
