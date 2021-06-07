@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
-//! XingAPI library that supports async/await syntax and multithreading.
+//! A safe, easy and optimized abstraction for XingAPI with support for async/await syntax.
 //!
 //! This document was written almost in Korean because it is based on a service provided by
 //! Korea Securities for users who can read Korean.
