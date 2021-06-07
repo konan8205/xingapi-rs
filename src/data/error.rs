@@ -22,14 +22,14 @@ pub enum DecodeError {
 impl std::fmt::Display for DecodeError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::UnknownTrCode => write!(f, "unknown tr code"),
+            Self::UnknownTrCode => write!(f, "unknown TR code"),
             Self::UnknownBlockName { block_name } => {
                 write!(f, "unknown block name: {}", block_name)
             }
             Self::MismatchBufferLength => write!(f, "mismatch buffer length"),
 
-            Self::DecodeOccursLength => write!(f, "could not decode array length"),
-            Self::DecodeString => write!(f, "could not decode cp949 string"),
+            Self::DecodeOccursLength => write!(f, "invalid array length"),
+            Self::DecodeString => write!(f, "invalid EUC-KR string"),
         }
     }
 }
@@ -62,13 +62,13 @@ impl std::fmt::Display for EncodeError {
                 write!(f, "mismatch block type: {}", block_name)
             }
             Self::MissingField { block_name, field_name } => {
-                write!(f, "missing field: {} in {}", field_name, block_name)
+                write!(f, "missing field: {} {}", block_name, field_name)
             }
             Self::ExceedMaxBlockCount { block_name } => {
-                write!(f, "max block count exceeded: {}", block_name)
+                write!(f, "the max length of array reached: {}", block_name)
             }
             Self::ExceedFieldLength { block_name, field_name } => {
-                write!(f, "field length exceeded: {} in {}", field_name, block_name)
+                write!(f, "the max length of field reached: {} {}", block_name, field_name)
             }
         }
     }
