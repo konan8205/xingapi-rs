@@ -8,9 +8,7 @@
 [xingapi-crate-img]: https://img.shields.io/crates/v/xingapi.svg?style=flat-square
 [xingapi-docs-rs-img]: https://img.shields.io/docsrs/xingapi?style=flat-square
 
-async/await 문법과 멀티스레딩을 지원하는 XingAPI 라이브러리입니다.
-
-현재는 윈도우 32비트 버전의 XingAPI만 지원합니다.
+안전성과 간편성, 최적화를 동시에 추구하는 XingAPI 추상화 구현 라이브러리입니다.
 
 ## 튜토리얼
 ### XingAPI 설치
