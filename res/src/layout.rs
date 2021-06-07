@@ -10,17 +10,11 @@ use std::{convert::AsRef, str::FromStr};
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
-fn next_symbol<'a, R>(reader: &R) -> Result<&'a str, Error>
-where
-    R: Read<'a>,
-{
+fn next_symbol<'a, R: Read<'a>>(reader: &R) -> Result<&'a str, Error> {
     reader.next_symbol().ok_or_else(|| unexpected_eof(reader))
 }
 
-fn get_symbol<'a, R>(reader: &R) -> Result<&'a str, Error>
-where
-    R: Read<'a>,
-{
+fn get_symbol<'a, R: Read<'a>>(reader: &R) -> Result<&'a str, Error> {
     reader.get_symbol().ok_or_else(|| unexpected_eof(reader))
 }
 
@@ -97,42 +91,33 @@ pub struct TrLayout {
 }
 
 impl TrLayout {
-    fn from_reader<'a, R>(reader: &R) -> Result<Self, Error>
-    where
-        R: Read<'a>,
-    {
-        let parse_delimiter = |require_next: bool| -> Result<bool, Error> {
+    fn from_reader<'a, R: Read<'a>>(reader: &R) -> Result<Self, Error> {
+        let parse_delimiter = || -> Result<(), Error> {
             match next_symbol(reader)? {
-                "," => Ok(true),
-                ";" => {
-                    if !require_next {
-                        Ok(false)
-                    } else {
-                        Err(Error::new(&reader.position(), ErrorKind::TrParamCount).into())
-                    }
-                }
+                "," => Ok(()),
+                ";" => Err(Error::new(&reader.position(), ErrorKind::TrParamCount).into()),
                 _ => Err(Error::new(&reader.position(), ErrorKind::TrParam).into()),
             }
         };
 
         let unexpected_func_param =
-            |reader: &R| -> Error { Error::new(&reader.position(), ErrorKind::TrParam).into() };
+            || -> Error { Error::new(&reader.position(), ErrorKind::TrParam).into() };
 
         if next_symbol(reader)? != "BEGIN_FUNCTION_MAP" {
             return Err(unexpected_syntax(reader));
         }
 
         let func_type =
-            TrType::from_str(next_symbol(reader)?).map_err(|_| unexpected_func_param(reader))?;
-        parse_delimiter(true)?;
+            TrType::from_str(next_symbol(reader)?).map_err(|_| unexpected_func_param())?;
+        parse_delimiter()?;
 
         let desc = next_symbol(reader)?.to_owned();
-        parse_delimiter(true)?;
+        parse_delimiter()?;
 
         let name = next_symbol(reader)?.to_owned();
 
         if func_type == TrType::Real && name.len() != 3 {
-            return Err(unexpected_func_param(reader));
+            return Err(unexpected_func_param());
         }
 
         let mut attr = false;
@@ -146,34 +131,33 @@ impl TrLayout {
                 Regex::new(r"(?P<key>[[:alpha:]]*)=(?P<value>.*)").unwrap();
         }
 
-        while parse_delimiter(false)? {
+        loop {
+            match next_symbol(reader)? {
+                "," => {}
+                ";" => break,
+                _ => return Err(unexpected_func_param()),
+            }
+
             let param = next_symbol(reader)?;
             if let Some(cap) = KV_REGEX.captures(param) {
-                let param_key =
-                    cap.name("key").ok_or_else(|| unexpected_func_param(reader))?.as_str();
-                let param_val =
-                    cap.name("value").ok_or_else(|| unexpected_func_param(reader))?.as_str();
+                let param_key = cap.name("key").ok_or_else(|| unexpected_func_param())?.as_str();
+                let param_val = cap.name("value").ok_or_else(|| unexpected_func_param())?.as_str();
 
                 match param_key {
                     "headtype" => {
                         header_type = Some(
-                            HeaderType::from_str(param_val)
-                                .map_err(|_| unexpected_func_param(reader))?,
+                            HeaderType::from_str(param_val).map_err(|_| unexpected_func_param())?,
                         )
                     }
                     "key" => {
-                        key = Some(
-                            param_val.parse::<u8>().map_err(|_| unexpected_func_param(reader))?,
-                        )
+                        key = Some(param_val.parse::<u8>().map_err(|_| unexpected_func_param())?)
                     }
                     "group" => {
-                        group = Some(
-                            param_val.parse::<u8>().map_err(|_| unexpected_func_param(reader))?,
-                        )
+                        group = Some(param_val.parse::<u8>().map_err(|_| unexpected_func_param())?)
                     }
                     "tuxcode" | "svr" | "SERVICE" | "CREATOR" | "CREDATE" => {}
                     _ => {
-                        return Err(unexpected_func_param(reader));
+                        return Err(unexpected_func_param());
                     }
                 }
             } else {
@@ -186,7 +170,7 @@ impl TrLayout {
                     }
                     "ENCRYPT" | "SIGNATURE" => {}
                     _ => {
-                        return Err(unexpected_func_param(reader));
+                        return Err(unexpected_func_param());
                     }
                 }
             }
@@ -280,26 +264,17 @@ pub struct BlockLayout {
 }
 
 impl BlockLayout {
-    fn from_reader<'a, R>(reader: &R, attr: bool) -> Result<Self, Error>
-    where
-        R: Read<'a>,
-    {
-        let parse_delimiter = |require_next: bool| -> Result<bool, Error> {
+    fn from_reader<'a, R: Read<'a>>(reader: &R, attr: bool) -> Result<Self, Error> {
+        let parse_delimiter = || -> Result<(), Error> {
             match next_symbol(reader)? {
-                "," => Ok(true),
-                ";" => {
-                    if !require_next {
-                        Ok(false)
-                    } else {
-                        Err(Error::new(&reader.position(), ErrorKind::BlockParamCount).into())
-                    }
-                }
+                "," => Ok(()),
+                ";" => Err(Error::new(&reader.position(), ErrorKind::BlockParamCount).into()),
                 _ => Err(Error::new(&reader.position(), ErrorKind::BlockParam).into()),
             }
         };
 
         let unexpected_block_param =
-            |reader: &R| -> Error { Error::new(&reader.position(), ErrorKind::BlockParam).into() };
+            || -> Error { Error::new(&reader.position(), ErrorKind::BlockParam).into() };
 
         lazy_static! {
             static ref NAME_REGEX: Regex = Regex::new(r"\w*(In|Out)Block\d*").unwrap();
@@ -307,25 +282,31 @@ impl BlockLayout {
 
         let name = next_symbol(reader)?.to_owned();
         if !NAME_REGEX.is_match(&name) {
-            return Err(unexpected_block_param(reader));
+            return Err(unexpected_block_param());
         }
-        parse_delimiter(true)?;
+        parse_delimiter()?;
 
         let desc = next_symbol(reader)?.to_owned();
-        parse_delimiter(true)?;
+        parse_delimiter()?;
 
-        let block_type = BlockType::from_str(next_symbol(reader)?)
-            .map_err(|_| unexpected_block_param(reader))?;
+        let block_type =
+            BlockType::from_str(next_symbol(reader)?).map_err(|_| unexpected_block_param())?;
 
         let mut occurs = false;
 
-        while parse_delimiter(false)? {
+        loop {
+            match next_symbol(reader)? {
+                "," => {}
+                ";" => break,
+                _ => return Err(unexpected_block_param()),
+            }
+
             match next_symbol(reader)? {
                 "occurs" => {
                     occurs = true;
                 }
                 _ => {
-                    return Err(unexpected_block_param(reader));
+                    return Err(unexpected_block_param());
                 }
             }
         }
@@ -412,58 +393,49 @@ pub struct FieldLayout {
 }
 
 impl FieldLayout {
-    fn from_reader<'a, R>(reader: &R) -> Result<Self, Error>
-    where
-        R: Read<'a>,
-    {
-        let parse_delimiter = |require_next: bool| -> Result<bool, Error> {
+    fn from_reader<'a, R: Read<'a>>(reader: &R) -> Result<Self, Error> {
+        let parse_delimiter = || -> Result<(), Error> {
             match next_symbol(reader)? {
-                "," => Ok(true),
-                ";" => {
-                    if !require_next {
-                        Ok(false)
-                    } else {
-                        Err(Error::new(&reader.position(), ErrorKind::FieldParamCount).into())
-                    }
-                }
+                "," => Ok(()),
+                ";" => Err(Error::new(&reader.position(), ErrorKind::FieldParamCount).into()),
                 _ => Err(Error::new(&reader.position(), ErrorKind::FieldParam).into()),
             }
         };
 
         let unexpected_field_param =
-            |reader: &R| -> Error { Error::new(&reader.position(), ErrorKind::FieldParam).into() };
+            || -> Error { Error::new(&reader.position(), ErrorKind::FieldParam).into() };
 
         let desc = next_symbol(reader)?.to_owned();
-        parse_delimiter(true)?;
+        parse_delimiter()?;
 
         let name_old = next_symbol(reader)?.to_owned();
-        parse_delimiter(true)?;
+        parse_delimiter()?;
 
         let name = next_symbol(reader)?.to_owned();
-        parse_delimiter(true)?;
+        parse_delimiter()?;
 
-        let field_type = FieldType::from_str(next_symbol(reader)?)
-            .map_err(|_| unexpected_field_param(reader))?;
-        parse_delimiter(true)?;
+        let field_type =
+            FieldType::from_str(next_symbol(reader)?).map_err(|_| unexpected_field_param())?;
+        parse_delimiter()?;
 
         lazy_static! {
             static ref LENGTH_REGEX: Regex = Regex::new(r"(?P<len>\d+)(\.(?P<point>\d))?").unwrap();
         }
 
         let captures: Captures =
-            LENGTH_REGEX.captures(next_symbol(reader)?).ok_or(unexpected_field_param(reader))?;
+            LENGTH_REGEX.captures(next_symbol(reader)?).ok_or(unexpected_field_param())?;
 
         let len = captures
             .name("len")
-            .ok_or(unexpected_field_param(reader))?
+            .ok_or(unexpected_field_param())?
             .as_str()
             .parse::<usize>()
-            .map_err(|_| unexpected_field_param(reader))?;
+            .map_err(|_| unexpected_field_param())?;
 
         let point = if let Some(cap) = captures.name("point") {
             let point = cap.as_str();
             if !point.is_empty() {
-                Some(point.parse::<usize>().map_err(|_| unexpected_field_param(reader))?)
+                Some(point.parse::<usize>().map_err(|_| unexpected_field_param())?)
             } else {
                 None
             }
