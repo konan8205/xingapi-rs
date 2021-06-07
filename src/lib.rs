@@ -2,6 +2,8 @@
 
 //! A safe, easy and optimized abstraction for XingAPI with support for async/await syntax.
 //!
+//! 안전성과 간편성, 최적화를 동시에 추구하는 XingAPI 추상화 구현 라이브러리입니다.
+//!
 //! # Requirements
 //! - 이베스트투자증권에서 회원들에게 제공하는 윈도우용 XingAPI 최신 버전
 //! - TR에 필요한 RES (TR 레이아웃) 파일. DevCenter 프로그램에서 전부 다운로드 받을 수 있습니다.
