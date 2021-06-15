@@ -282,10 +282,11 @@ impl Caller {
             let mut quit = false;
             loop {
                 unsafe {
+                    #[allow(clippy::uninit_assumed_init)]
                     let mut msg = MaybeUninit::<MSG>::uninit().assume_init();
                     while PeekMessageA(&mut msg, std::ptr::null_mut(), 0, 0, PM_REMOVE) == TRUE {
-                        TranslateMessage(&mut msg);
-                        DispatchMessageA(&mut msg);
+                        TranslateMessage(&msg);
+                        DispatchMessageA(&msg);
                     }
                 }
 
@@ -300,10 +301,8 @@ impl Caller {
                             break;
                         }
                     }
-                } else {
-                    if quit {
-                        break;
-                    }
+                } else if quit {
+                    break;
                 }
 
                 if let Ok(()) = rx_quit.try_recv() {
@@ -371,7 +370,7 @@ impl Caller {
                     if unsafe { DestroyWindow(hwnd as _) } == TRUE {
                         Ok(())
                     } else {
-                        Err(Win32Error::from_last_error().into())
+                        Err(Win32Error::from_last_error())
                     }
                 )
             }

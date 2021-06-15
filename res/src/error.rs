@@ -81,14 +81,14 @@ pub(crate) fn unexpected_syntax<'a, R>(reader: &R) -> Error
 where
     R: Read<'a>,
 {
-    Error::new(&reader.position(), ErrorKind::Syntax).into()
+    Error::new(&reader.position(), ErrorKind::Syntax)
 }
 
 pub(crate) fn unexpected_eof<'a, R>(reader: &R) -> Error
 where
     R: Read<'a>,
 {
-    Error::new(&reader.position(), ErrorKind::Eof).into()
+    Error::new(&reader.position(), ErrorKind::Eof)
 }
 
 /// RES 파일 불러오기에 실패하면 발생하는 에러입니다.

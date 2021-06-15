@@ -78,12 +78,10 @@ impl XingApiBuilder {
         let tr_layouts =
             Arc::new(if let Some(val) = self.tr_layouts { val } else { xingapi_res::load()? });
 
-        Ok(Arc::new(XingApi {
-            session_window: SessionWindow::new(caller.clone()).await?,
-            query_window: QueryWindow::new(caller.clone(), tr_layouts.clone()).await?,
-            caller,
-            tr_layouts,
-        }))
+        let session_window = SessionWindow::new(caller.clone()).await?;
+        let query_window = QueryWindow::new(caller.clone(), tr_layouts.clone()).await?;
+
+        Ok(Arc::new(XingApi { caller, tr_layouts, session_window, query_window }))
     }
 }
 
@@ -97,14 +95,12 @@ pub struct XingApi {
 impl XingApi {
     pub async fn new() -> Result<Arc<Self>, Error> {
         let caller = Arc::new(Caller::new(None)?);
-        let layout_map = Arc::new(xingapi_res::load()?);
+        let tr_layouts = Arc::new(xingapi_res::load()?);
 
-        Ok(Arc::new(Self {
-            session_window: SessionWindow::new(caller.clone()).await?,
-            query_window: QueryWindow::new(caller.clone(), layout_map.clone()).await?,
-            caller,
-            tr_layouts: layout_map,
-        }))
+        let session_window = SessionWindow::new(caller.clone()).await?;
+        let query_window = QueryWindow::new(caller.clone(), tr_layouts.clone()).await?;
+
+        Ok(Arc::new(XingApi { caller, tr_layouts, session_window, query_window }))
     }
 
     pub async fn connect(
@@ -150,12 +146,11 @@ impl XingApi {
 
         let mut accounts = Vec::with_capacity(codes.len());
         for code in codes {
-            accounts.push(Account {
-                name: handle.get_account_name(&code).await,
-                detail_name: handle.get_account_detail_name(&code).await,
-                nickname: handle.get_account_nickname(&code).await,
-                code,
-            });
+            let name = handle.get_account_name(&code).await;
+            let detail_name = handle.get_account_detail_name(&code).await;
+            let nickname = handle.get_account_nickname(&code).await;
+
+            accounts.push(Account { code, name, detail_name, nickname });
         }
 
         accounts

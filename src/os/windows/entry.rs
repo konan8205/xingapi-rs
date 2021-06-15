@@ -14,7 +14,7 @@ use crate::{
 
 use lazy_static::lazy_static;
 use libloading::os::windows::{Library, Symbol};
-use std::{mem::MaybeUninit, path::Path, sync::Mutex};
+use std::{path::Path, sync::Mutex};
 
 use bindings::{c_int, c_void, BOOL, FALSE, HWND, LPARAM, TRUE};
 
@@ -135,14 +135,14 @@ impl Entry {
 
         let _lock_guard = LOAD_LIB_LOCK.lock().unwrap();
 
-        if let Ok(_) = Library::open_already_loaded(path) {
+        if Library::open_already_loaded(path).is_ok() {
             return Err(EntryError::LibraryInUse);
         }
 
-        Ok(unsafe { Library::new(path) }.map_err(|error| {
+        unsafe { Library::new(path) }.map_err(|error| {
             let path = path.to_string_lossy().into();
             EntryError::Library { path, error }
-        })?)
+        })
     }
 
     fn load_entry(lib: Library, path: &Path) -> Result<Self, EntryError> {
@@ -328,7 +328,7 @@ impl Entry {
     }
 
     pub fn advise_real_data(&self, hwnd: usize, tr_code: &str, data: &[String]) -> Result<(), ()> {
-        if data.iter().find(|s| !s.is_ascii()).is_some() {
+        if data.iter().any(|s| !s.is_ascii()) {
             return Err(());
         }
 
@@ -356,7 +356,7 @@ impl Entry {
         tr_code: &str,
         data: &[String],
     ) -> Result<(), ()> {
-        if data.iter().find(|s| !s.is_ascii()).is_some() {
+        if data.iter().any(|s| !s.is_ascii()) {
             return Err(());
         }
 
@@ -393,18 +393,18 @@ impl Entry {
         let len = unsafe { (self.get_acc_list_count)() };
 
         let mut accounts = Vec::with_capacity(len as _);
-        let mut buffer = unsafe { MaybeUninit::<[u8; 32]>::uninit().assume_init() };
+        let mut buffer = [0; 32];
         for i in 0..len {
             unsafe {
-                assert_eq!((self.get_acc_list)(i, buffer.as_mut_ptr(), buffer.len() as _), TRUE)
-            };
+                assert_eq!((self.get_acc_list)(i, buffer.as_mut_ptr(), buffer.len() as _), TRUE);
+            }
             accounts.push(euckr::decode(&buffer).trim_end().to_owned());
         }
         accounts
     }
 
     pub fn get_account_name(&self, account: &str) -> String {
-        let mut buffer = unsafe { MaybeUninit::<[u8; 64]>::uninit().assume_init() };
+        let mut buffer = [0; 64];
         unsafe {
             (self.get_acc_name)(
                 euckr::encode(account).as_ptr(),
@@ -416,7 +416,7 @@ impl Entry {
     }
 
     pub fn get_account_detail_name(&self, account: &str) -> String {
-        let mut buffer = unsafe { MaybeUninit::<[u8; 64]>::uninit().assume_init() };
+        let mut buffer = [0; 64];
         unsafe {
             (self.get_acc_detail_name)(
                 euckr::encode(account).as_ptr(),
@@ -428,7 +428,7 @@ impl Entry {
     }
 
     pub fn get_account_nickname(&self, account: &str) -> String {
-        let mut buffer = unsafe { MaybeUninit::<[u8; 64]>::uninit().assume_init() };
+        let mut buffer = [0; 64];
         unsafe {
             (self.get_acc_nickname)(
                 euckr::encode(account).as_ptr(),
@@ -440,7 +440,7 @@ impl Entry {
     }
 
     pub fn get_client_ip(&self) -> String {
-        let mut buffer = unsafe { MaybeUninit::<[u8; 64]>::uninit().assume_init() };
+        let mut buffer = [0; 64];
         unsafe {
             (self.get_client_ip)(buffer.as_mut_ptr());
         }
@@ -448,16 +448,15 @@ impl Entry {
     }
 
     pub fn get_server_name(&self) -> String {
-        let mut buffer = unsafe { MaybeUninit::<[u8; 64]>::uninit().assume_init() };
+        let mut buffer = [0; 64];
         unsafe {
             (self.get_server_name)(buffer.as_mut_ptr());
         }
-
         euckr::decode(&buffer).trim_end().to_owned()
     }
 
     pub fn get_api_path(&self) -> String {
-        let mut buffer = unsafe { MaybeUninit::<[u8; 1024]>::uninit().assume_init() };
+        let mut buffer = [0; 261];
         unsafe {
             (self.get_api_path)(buffer.as_mut_ptr());
         }
@@ -471,7 +470,7 @@ impl Entry {
 
     pub fn get_error_message(&self, code: i32) -> String {
         unsafe {
-            let mut buffer = MaybeUninit::<[u8; 1024]>::uninit().assume_init();
+            let mut buffer = [0; 1024];
             let len = (self.get_error_message)(code, buffer.as_mut_ptr(), buffer.len() as _);
             assert!(len >= 0);
 

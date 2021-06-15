@@ -95,13 +95,13 @@ impl TrLayout {
         let parse_delimiter = || -> Result<(), Error> {
             match next_symbol(reader)? {
                 "," => Ok(()),
-                ";" => Err(Error::new(&reader.position(), ErrorKind::TrParamCount).into()),
-                _ => Err(Error::new(&reader.position(), ErrorKind::TrParam).into()),
+                ";" => Err(Error::new(&reader.position(), ErrorKind::TrParamCount)),
+                _ => Err(Error::new(&reader.position(), ErrorKind::TrParam)),
             }
         };
 
         let unexpected_func_param =
-            || -> Error { Error::new(&reader.position(), ErrorKind::TrParam).into() };
+            || -> Error { Error::new(&reader.position(), ErrorKind::TrParam) };
 
         if next_symbol(reader)? != "BEGIN_FUNCTION_MAP" {
             return Err(unexpected_syntax(reader));
@@ -140,8 +140,8 @@ impl TrLayout {
 
             let param = next_symbol(reader)?;
             if let Some(cap) = KV_REGEX.captures(param) {
-                let param_key = cap.name("key").ok_or_else(|| unexpected_func_param())?.as_str();
-                let param_val = cap.name("value").ok_or_else(|| unexpected_func_param())?.as_str();
+                let param_key = cap.name("key").ok_or_else(unexpected_func_param)?.as_str();
+                let param_val = cap.name("value").ok_or_else(unexpected_func_param)?.as_str();
 
                 match param_key {
                     "headtype" => {
@@ -237,7 +237,7 @@ pub enum BlockType {
 impl FromStr for BlockType {
     type Err = ();
     fn from_str(text: &str) -> Result<Self, Self::Err> {
-        match text.as_ref() {
+        match text {
             "input" => Ok(Self::Input),
             "output" => Ok(Self::Output),
             _ => Err(()),
@@ -268,13 +268,13 @@ impl BlockLayout {
         let parse_delimiter = || -> Result<(), Error> {
             match next_symbol(reader)? {
                 "," => Ok(()),
-                ";" => Err(Error::new(&reader.position(), ErrorKind::BlockParamCount).into()),
-                _ => Err(Error::new(&reader.position(), ErrorKind::BlockParam).into()),
+                ";" => Err(Error::new(&reader.position(), ErrorKind::BlockParamCount)),
+                _ => Err(Error::new(&reader.position(), ErrorKind::BlockParam)),
             }
         };
 
         let unexpected_block_param =
-            || -> Error { Error::new(&reader.position(), ErrorKind::BlockParam).into() };
+            || -> Error { Error::new(&reader.position(), ErrorKind::BlockParam) };
 
         lazy_static! {
             static ref NAME_REGEX: Regex = Regex::new(r"\w*(In|Out)Block\d*").unwrap();
@@ -363,7 +363,7 @@ pub enum FieldType {
 impl FromStr for FieldType {
     type Err = ();
     fn from_str(text: &str) -> Result<Self, Self::Err> {
-        match text.as_ref() {
+        match text {
             "char" => Ok(Self::Char),
             "date" => Ok(Self::Date),
             "long" | "int" => Ok(Self::Int),
@@ -397,13 +397,13 @@ impl FieldLayout {
         let parse_delimiter = || -> Result<(), Error> {
             match next_symbol(reader)? {
                 "," => Ok(()),
-                ";" => Err(Error::new(&reader.position(), ErrorKind::FieldParamCount).into()),
-                _ => Err(Error::new(&reader.position(), ErrorKind::FieldParam).into()),
+                ";" => Err(Error::new(&reader.position(), ErrorKind::FieldParamCount)),
+                _ => Err(Error::new(&reader.position(), ErrorKind::FieldParam)),
             }
         };
 
         let unexpected_field_param =
-            || -> Error { Error::new(&reader.position(), ErrorKind::FieldParam).into() };
+            || -> Error { Error::new(&reader.position(), ErrorKind::FieldParam) };
 
         let desc = next_symbol(reader)?.to_owned();
         parse_delimiter()?;
@@ -423,11 +423,11 @@ impl FieldLayout {
         }
 
         let captures: Captures =
-            LENGTH_REGEX.captures(next_symbol(reader)?).ok_or(unexpected_field_param())?;
+            LENGTH_REGEX.captures(next_symbol(reader)?).ok_or_else(unexpected_field_param)?;
 
         let len = captures
             .name("len")
-            .ok_or(unexpected_field_param())?
+            .ok_or_else(unexpected_field_param)?
             .as_str()
             .parse::<usize>()
             .map_err(|_| unexpected_field_param())?;
@@ -444,11 +444,8 @@ impl FieldLayout {
         };
 
         // 필드가 세미콜론으로 끝나지 않는 경우도 있음
-        match get_symbol(reader)? {
-            ";" => {
-                reader.next_symbol().unwrap();
-            }
-            _ => {}
+        if get_symbol(reader)? == ";" {
+            reader.next_symbol().unwrap();
         }
 
         Ok(FieldLayout { desc, name_old, name, field_type, len, point })

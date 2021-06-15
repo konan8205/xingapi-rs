@@ -22,8 +22,8 @@ pub unsafe fn decode_ptr(data: *const u8) -> String {
 // EUC-KR(CP949)로 인코딩된 null-terminated 문자열을 UTF-8 문자열로 디코딩합니다.
 pub fn decode(data: &[u8]) -> Cow<str> {
     let mut len = data.len();
-    for i in 0..data.len() {
-        if data[i] == b'\0' {
+    for (i, &ch) in data.iter().enumerate() {
+        if ch == b'\0' {
             len = i;
             break;
         }

@@ -102,7 +102,7 @@ impl<'a> Read<'a> for StrRead<'a> {
                     }
                 }
                 '/' => {
-                    if let Some((_, ch2)) = state.iter.clone().skip(1).next() {
+                    if let Some((_, ch2)) = state.iter.clone().nth(1) {
                         if ch2 == '*' {
                             if idx == start_idx {
                                 state.iter.next().unwrap();

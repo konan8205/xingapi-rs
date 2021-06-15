@@ -36,13 +36,9 @@ pub trait Message: std::fmt::Display {
     /// t1764 TR과 같이 정상 처리시에 응답 메시지가 발생하지 않는 경우도 고려해야 합니다.
     fn is_ok(&self) -> bool {
         if let Ok(code) = self.code().parse::<i32>() {
-            code >= 0 && code < 1000
+            (0..1000).contains(&code)
         } else {
-            if self.code().is_empty() && self.message().is_empty() {
-                true
-            } else {
-                false
-            }
+            self.code().is_empty() && self.message().is_empty()
         }
     }
 
@@ -110,7 +106,7 @@ impl QueryResponse {
     /// 수신한 데이터에 대한 디코딩 결과를 반환합니다.
     ///
     /// Response가 에러인 경우 패닉이 발생합니다.
-    pub fn data<'a>(&'a self) -> Result<&'a Data, &'a DecodeError> {
+    pub fn data(&self) -> Result<&Data, &DecodeError> {
         self.data
             .as_ref()
             .expect("this response has no data. check if the response is an error.")
@@ -167,7 +163,7 @@ impl RealResponse {
     }
 
     /// 수신한 데이터에 대한 디코딩 결과를 반환합니다.
-    pub fn data<'a>(&'a self) -> Result<&'a Data, &'a DecodeError> {
+    pub fn data(&self) -> Result<&Data, &DecodeError> {
         self.data.as_ref()
     }
 

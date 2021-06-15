@@ -65,10 +65,7 @@ pub enum Block {
 impl Block {
     /// 단일 블록인지에 대한 여부를 반환합니다.
     pub fn is_block(&self) -> bool {
-        match self {
-            Self::Block(_) => true,
-            _ => false,
-        }
+        matches!(self, Self::Block(_))
     }
 
     /// 단일 블록인 경우 값에 대한 참조자를 반환힙니다.
@@ -89,10 +86,7 @@ impl Block {
 
     /// 배열 블록인지에 대한 여부를 반환합니다.
     pub fn is_array(&self) -> bool {
-        match self {
-            Self::Array(_) => true,
-            _ => false,
-        }
+        matches!(self, Self::Array(_))
     }
 
     /// 배열 블록인 경우 값에 대한 참조자를 반환합니다.
@@ -144,7 +138,7 @@ pub(crate) fn decode(
     block_data: HashMap<String, Vec<u8>>,
     non_block_data: Option<Vec<u8>>,
 ) -> Result<Data, DecodeError> {
-    let tr_layout = tr_layouts.get(tr_code).ok_or_else(|| DecodeError::UnknownTrCode)?;
+    let tr_layout = tr_layouts.get(tr_code).ok_or(DecodeError::UnknownTrCode)?;
 
     if let Some(raw_data) = non_block_data {
         Ok(decode_non_block(tr_layout, &raw_data)?)
@@ -302,8 +296,8 @@ pub(crate) fn decode_non_block(tr_layout: &TrLayout, raw_data: &[u8]) -> Result<
 
 fn decode_str(data: &[u8]) -> Result<Cow<str>, DecodeError> {
     let mut len = data.len();
-    for i in 0..data.len() {
-        if data[i] <= 0x20 {
+    for (i, &ch) in data.iter().enumerate() {
+        if ch <= 0x20 {
             len = i;
             break;
         }
@@ -324,7 +318,7 @@ pub(crate) fn encode(
     tr_layouts: &HashMap<String, TrLayout>,
     data: &Data,
 ) -> Result<Vec<u8>, EncodeError> {
-    let res = tr_layouts.get(&data.code).ok_or_else(|| EncodeError::UnknownTrCode)?;
+    let res = tr_layouts.get(&data.code).ok_or(EncodeError::UnknownTrCode)?;
 
     let block_layouts = match data.data_type {
         DataType::Input => &res.in_blocks,

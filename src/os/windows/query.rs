@@ -114,7 +114,7 @@ pub struct QueryWindow {
 }
 
 impl QueryWindow {
-    fn tx_res<'a>(&'a self, req_id: i32) -> &'a async_lock::Mutex<Option<TxResponse>> {
+    fn tx_res(&self, req_id: i32) -> &async_lock::Mutex<Option<TxResponse>> {
         &unsafe { &*self.window_data.load(Ordering::Relaxed) }.tx_res_map[req_id as usize]
     }
 
@@ -263,10 +263,8 @@ impl QueryWindow {
                             if tr_layout.block {
                                 let block_name = euckr::decode(&recv_packet.block_name).to_string();
                                 res.block_data.insert(block_name, raw_data);
-                            } else {
-                                if res.non_block_data.is_none() {
-                                    res.non_block_data = Some(raw_data)
-                                }
+                            } else if res.non_block_data.is_none() {
+                                res.non_block_data = Some(raw_data)
                             }
                         }
                     }
