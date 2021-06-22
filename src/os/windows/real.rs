@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
 use super::{
-    bindings,
     caller::Caller,
     raw::{RECV_REAL_PACKET, XM_RECEIVE_REAL_DATA},
     window::Window,
@@ -20,9 +19,12 @@ use std::{
 };
 use xingapi_res::TrLayout;
 
-use bindings::{
-    DefWindowProcA, GetModuleHandleA, GetWindowLongPtrA, RegisterClassExA, SetWindowLongPtrA,
-    GWLP_USERDATA, HWND, LPARAM, LRESULT, UINT, WM_DESTROY, WNDCLASSEXA, WPARAM,
+use winapi::shared::minwindef::{LPARAM, LRESULT, UINT, WPARAM};
+use winapi::shared::windef::HWND;
+use winapi::um::libloaderapi::GetModuleHandleA;
+use winapi::um::winuser::{
+    DefWindowProcA, GetWindowLongPtrA, RegisterClassExA, SetWindowLongPtrA, GWLP_USERDATA,
+    WM_DESTROY, WNDCLASSEXA,
 };
 
 lazy_static! {

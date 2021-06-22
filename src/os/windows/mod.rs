@@ -9,26 +9,6 @@ mod query;
 mod real;
 mod session;
 
-mod bindings {
-    pub use winapi::{
-        ctypes::{c_int, c_void},
-        shared::{
-            minwindef::{BOOL, DWORD, FALSE, LPARAM, LRESULT, TRUE, UINT, WPARAM},
-            windef::HWND,
-        },
-        um::{
-            errhandlingapi::GetLastError,
-            libloaderapi::GetModuleHandleA,
-            winuser::{
-                CreateWindowExA, DefWindowProcA, DestroyWindow, DispatchMessageA,
-                GetWindowLongPtrA, PeekMessageA, RegisterClassExA, SetWindowLongPtrA,
-                TranslateMessage, GWLP_USERDATA, HWND_MESSAGE, MSG, PM_REMOVE, WM_DESTROY, WM_USER,
-                WNDCLASSEXA,
-            },
-        },
-    };
-}
-
 use self::{caller::Caller, query::QueryWindow, real::RealWindow, session::SessionWindow};
 use crate::{
     data::Data,

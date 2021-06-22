@@ -3,7 +3,8 @@
 #![allow(dead_code)]
 #![allow(non_camel_case_types)]
 
-use super::bindings::{UINT, WM_USER};
+use winapi::shared::minwindef::UINT;
+use winapi::um::winuser::WM_USER;
 
 pub const XM_OFFSET: UINT = WM_USER;
 pub const XM_DISCONNECT: UINT = XM_OFFSET + 1;

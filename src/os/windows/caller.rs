@@ -3,7 +3,7 @@
 // XingAPI 및 Win32 API 함수 호출을 별도의 스레드에서 비동기적으로 대신 수행하고
 // 윈도우 메시지 루프를 반복하는 스레드에 대한 모듈입니다.
 
-use super::{bindings, entry::Entry};
+use super::entry::Entry;
 use crate::error::{EntryError, Error, Win32Error};
 
 use std::{
@@ -21,9 +21,11 @@ use std::{
     time::Duration,
 };
 
-use bindings::{
-    CreateWindowExA, DestroyWindow, DispatchMessageA, GetModuleHandleA, PeekMessageA,
-    TranslateMessage, HWND_MESSAGE, MSG, PM_REMOVE, TRUE,
+use winapi::shared::minwindef::TRUE;
+use winapi::um::libloaderapi::GetModuleHandleA;
+use winapi::um::winuser::{
+    CreateWindowExA, DestroyWindow, DispatchMessageA, PeekMessageA, TranslateMessage, HWND_MESSAGE,
+    MSG, PM_REMOVE,
 };
 
 macro_rules! define_fn {
