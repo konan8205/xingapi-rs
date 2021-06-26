@@ -9,7 +9,7 @@
 pub enum DecodeError {
     /// TR 코드를 불러오지 않았거나 알 수 없습니다.
     UnknownTrCode,
-    /// 블록이 누락되었습니다.
+    /// 레이아웃에 존재하지 않는 블록이 있습니다.
     UnknownBlockName { block_name: String },
     /// 데이터 크기가 일치하지 않습니다.
     MismatchBufferLength,
