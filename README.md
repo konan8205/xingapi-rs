@@ -13,27 +13,32 @@
 ## 튜토리얼
 ### XingAPI 설치
 이베스트투자증권에서 제공하는 XingAPI 32비트 버전 설치 파일을 받아 기본 위치인
-`C:\eBEST\xingAPI`에 설치합니다.
+`C:\eBEST\xingAPI`에 설치해주세요.
 
 ### Rust 설치
+Rust toolchain을 설치하기 위해선 Visual Studio의 MSVC 컴파일러가 필요합니다.
+
 [rust-lang.org][rust-lang-start]에서 `rustup-init.exe`를 다운로드 받고 실행하여
-기본적인 Rust toolchain을 설치합니다. 64비트 버전을 설치한 경우 다음과 같은
-명령어를 입력하여 `i686-pc-windows-msvc` target을 추가합니다.
+설치해주세요. 64비트 버전을 설치하신 경우 콘솔에 다음의 명령어를 입력하여 직접
+32비트 타겟을 추가해주셔야 합니다.
+
 ```sh
 rustup target add i686-pc-windows-msvc
 ```
 
 ### 프로젝트 생성
-다음의 명령어를 입력하여 프로젝트를 바로 생성합니다.
+`cargo new` 명령어를 콘솔에서 사용하여 프로젝트를 생성해주세요.
+
 ```sh
-cargo new project
+cargo new login
 ```
 
-`Cargo.toml` 파일에서 의존성 패키지 목록에 `xingapi`, `async_std`, `clap`을
-추가합니다.
+`Cargo.toml` 프로젝트 구성 파일에 다음과 같이 의존성 패키지 목록에 `xingapi`,
+`tokio`, `clap`을 추가해주세요.
+
 ```toml
 [package]
-name = "project"
+name = "login"
 version = "0.1.0"
 edition = "2018"
 
@@ -44,14 +49,14 @@ xingapi = "0.2"
 ```
 
 프로젝트 디렉터리에 `.cargo/config.toml` 파일을 생성하고 아래와 같이 작성하여
-build target을 고정합니다.
+빌드 타겟을 고정해주세요.
 ```toml
 [build]
 target = "i686-pc-windows-msvc"
 ```
 
 ### 소스코드 작성
-`src/main.rs` 파일에 다음의 소스 코드를 작성합니다.
+`src/main.rs` 파일에 다음의 소스 코드로 재작성해주세요.
 ```rust
 use clap::Clap;
 use xingapi::{response::Message, XingApi};
@@ -84,25 +89,21 @@ async fn main() {
 ```
 
 ### 컴파일 및 실행
-아래와 같이 명령어를 입력하여 프로젝트를 빌드하고 실행합니다. `$ID`와 `$PW`에
-각각 모의투자 아이디와 비밀번호를 입력합니다.
-```sh
-cargo run -- -i $ID -p $PW
-```
-또는
+`cargo run` 명령어를 사용하여 프로젝트를 빌드하고 실행할 수 있습니다.
+
+다음과 같이 콘솔에 명령어를 입력하여 정상적으로 빌드되고 실행되는지
+확인해주세요. `$ID`와 `$PW`에는 각각 모의투자 아이디와 비밀번호를 입력하시면
+됩니다.
+
 ```sh
 cargo run --target i686-pc-windows-msvc -- -i $ID -p $PW
 ```
 
 ### 더 알아볼 것
-예제 소스 코드는 저장소의 `examples` 디렉터리에 존재합니다.
+예제 코드는 저장소의 `examples` 디렉터리에 존재합니다.
 
 Rust 언어가 처음이시라면 [온라인 설명서][book]나 그 [번역본][book-ko]을
 읽어보세요. 한국에 서적으로도 출간되어 있습니다.
-
-## 기여
-이 프로젝트는 안정성과 신뢰성을 높이고자 오픈 소스로 제작되었습니다. 버그나
-제안이 있으시다면 GitHub 저장소의 Issue에 편히 올려주시면 됩니다.
 
 ## 라이선스
 라이선스는 Mozilla Public License 2.0을 채택하고 있습니다. 라이브러리의 소스
