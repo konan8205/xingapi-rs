@@ -46,9 +46,9 @@ use os::windows as imp;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 
+/// 이베스트투자증권 계좌를 저장하는 객체입니다.
 #[derive(Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-/// 이베스트투자증권 계좌를 저장하는 객체입니다.
 pub struct Account {
     /// 계좌번호
     pub code: String,
