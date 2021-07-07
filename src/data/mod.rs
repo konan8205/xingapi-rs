@@ -138,7 +138,7 @@ pub(crate) fn decode(
     block_data: HashMap<String, Vec<u8>>,
     non_block_data: Option<Vec<u8>>,
 ) -> Result<Data, DecodeError> {
-    let tr_layout = tr_layouts.get(tr_code).ok_or(DecodeError::UnknownTrCode)?;
+    let tr_layout = tr_layouts.get(tr_code).ok_or(DecodeError::UnknownLayout)?;
 
     if let Some(raw_data) = non_block_data {
         Ok(decode_non_block(tr_layout, &raw_data)?)
@@ -150,10 +150,11 @@ pub(crate) fn decode(
         };
 
         for (block_name, raw_data) in block_data {
-            let block_layout =
-                tr_layout.out_blocks.iter().find(|b| b.name == block_name).ok_or_else(|| {
-                    DecodeError::UnknownBlockName { block_name: block_name.to_string() }
-                })?;
+            let block_layout = tr_layout
+                .out_blocks
+                .iter()
+                .find(|b| b.name == block_name)
+                .ok_or_else(|| DecodeError::UnknownBlock { name: block_name.to_owned() })?;
 
             data.blocks.insert(
                 block_name,
@@ -248,7 +249,7 @@ pub(crate) fn decode_non_block(tr_layout: &TrLayout, raw_data: &[u8]) -> Result<
 
             let block_count =
                 str::parse::<u32>(euckr::decode(&raw_data[offset..offset + 5]).as_ref())
-                    .map_err(|_| DecodeError::DecodeOccursLength)? as usize;
+                    .map_err(|_| DecodeError::DecodeLength)? as usize;
             offset += 5;
 
             if offset + block_layout.len * block_count > raw_data.len() {
@@ -318,7 +319,7 @@ pub(crate) fn encode(
     tr_layouts: &HashMap<String, TrLayout>,
     data: &Data,
 ) -> Result<Vec<u8>, EncodeError> {
-    let res = tr_layouts.get(&data.code).ok_or(EncodeError::UnknownTrCode)?;
+    let res = tr_layouts.get(&data.code).ok_or(EncodeError::UnknownLayout)?;
 
     let block_layouts = match data.data_type {
         DataType::Input => &res.in_blocks,

@@ -7,28 +7,28 @@
 /// 응답 데이터를 디코딩할 때 발생하는 에러입니다.
 #[derive(Clone, Debug)]
 pub enum DecodeError {
-    /// TR 코드를 불러오지 않았거나 알 수 없습니다.
-    UnknownTrCode,
+    /// 해당 TR에 대한 레이아웃을 알 수 없습니다.
+    UnknownLayout,
     /// 레이아웃에 존재하지 않는 블록이 있습니다.
-    UnknownBlockName { block_name: String },
+    UnknownBlock { name: String },
     /// 데이터 크기가 일치하지 않습니다.
     MismatchBufferLength,
     /// 배열 크기를 디코딩할 수 없습니다.
-    DecodeOccursLength,
-    /// CP949 데이터를 디코딩할 수 없습니다.
+    DecodeLength,
+    /// CP949 문자열을 디코딩할 수 없습니다.
     DecodeString,
 }
 
 impl std::fmt::Display for DecodeError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::UnknownTrCode => write!(f, "unknown TR code"),
-            Self::UnknownBlockName { block_name } => {
-                write!(f, "unknown block name: {}", block_name)
+            Self::UnknownLayout => write!(f, "unknown layout"),
+            Self::UnknownBlock { name } => {
+                write!(f, "unknown block: {}", name)
             }
             Self::MismatchBufferLength => write!(f, "mismatch buffer length"),
 
-            Self::DecodeOccursLength => write!(f, "invalid array length"),
+            Self::DecodeLength => write!(f, "invalid array length"),
             Self::DecodeString => write!(f, "invalid EUC-KR string"),
         }
     }
@@ -39,8 +39,8 @@ impl std::error::Error for DecodeError {}
 /// 요청 데이터를 인코딩할 때 발생하는 에러입니다.
 #[derive(Clone, Debug)]
 pub enum EncodeError {
-    /// TR 코드를 불러오지 않았거나 알 수 없습니다.
-    UnknownTrCode,
+    /// 해당 TR에 대한 레이아웃을 알 수 없습니다.
+    UnknownLayout,
     /// 블록이 누락되었습니다.
     MissingBlock { block_name: String },
     /// 블록 타입이 일치하지 않습니다.
@@ -56,7 +56,7 @@ pub enum EncodeError {
 impl std::fmt::Display for EncodeError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::UnknownTrCode => write!(f, "unknown tr code"),
+            Self::UnknownLayout => write!(f, "unknown layout"),
             Self::MissingBlock { block_name } => write!(f, "missing block: {}", block_name),
             Self::MismatchBlockType { block_name } => {
                 write!(f, "mismatch block type: {}", block_name)

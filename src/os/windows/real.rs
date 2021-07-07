@@ -112,7 +112,7 @@ impl RealWindow {
             if let Some(layout) = self.tr_layouts.get(&res.tr_code) {
                 data::decode_non_block(layout, &res.data)
             } else {
-                Err(DecodeError::UnknownTrCode)
+                Err(DecodeError::UnknownLayout)
             },
         )
     }
@@ -125,7 +125,7 @@ impl RealWindow {
                 if let Some(layout) = self.tr_layouts.get(&res.tr_code) {
                     data::decode_non_block(layout, &res.data)
                 } else {
-                    Err(DecodeError::UnknownTrCode)
+                    Err(DecodeError::UnknownLayout)
                 },
             ))
         } else {
