@@ -358,7 +358,7 @@ impl Caller {
                 ret!(
                     tx_ret,
                     waker,
-                    if hwnd != std::ptr::null_mut() {
+                    if !hwnd.is_null() {
                         Ok(hwnd as usize)
                     } else {
                         Err(Win32Error::from_last_error())
