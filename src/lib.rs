@@ -112,6 +112,13 @@ impl XingApiBuilder {
     }
 }
 
+#[cfg(any(windows, doc))]
+impl Default for XingApiBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /// XingAPI를 비동기 함수로 추상화한 객체입니다.
 ///
 /// `connect()`, `login()`과 같은 연결 및 로그인 함수를 호출할 경우, 다른 함수의 호출이 완료될
