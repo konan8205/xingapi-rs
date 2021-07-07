@@ -17,70 +17,29 @@ use crate::{
     Account,
 };
 
-use std::{
-    collections::HashMap,
-    path::{Path, PathBuf},
-    sync::Arc,
-};
+use std::{collections::HashMap, path::Path, sync::Arc};
 use xingapi_res::TrLayout;
-
-pub struct XingApiBuilder {
-    path: Option<PathBuf>,
-    tr_layouts: Option<HashMap<String, TrLayout>>,
-}
-
-impl XingApiBuilder {
-    pub fn new() -> Self {
-        Self { path: None, tr_layouts: None }
-    }
-
-    pub fn path<P: AsRef<Path>>(mut self, path: P) -> Self {
-        self.path = Some(path.as_ref().to_owned());
-        self
-    }
-
-    pub fn layouts<I>(mut self, layouts: I) -> Self
-    where
-        I: IntoIterator<Item = TrLayout>,
-    {
-        if self.tr_layouts.is_none() {
-            self.tr_layouts = Some(HashMap::new());
-        }
-
-        let tr_layouts = self.tr_layouts.as_mut().unwrap();
-        tr_layouts.extend(layouts.into_iter().map(|tr| (tr.code.to_owned(), tr)));
-        self
-    }
-
-    pub async fn build(self) -> Result<Arc<XingApi>, Error> {
-        let caller = Arc::new(Caller::new(self.path.as_deref())?);
-
-        let tr_layouts =
-            Arc::new(if let Some(val) = self.tr_layouts { val } else { xingapi_res::load()? });
-
-        let session_window = SessionWindow::new(caller.clone()).await?;
-        let query_window = QueryWindow::new(caller.clone(), tr_layouts.clone()).await?;
-
-        Ok(Arc::new(XingApi { caller, tr_layouts, session_window, query_window }))
-    }
-}
 
 pub struct XingApi {
     caller: Arc<Caller>,
-    tr_layouts: Arc<HashMap<String, TrLayout>>,
+    layout_tbl: Arc<HashMap<String, TrLayout>>,
     session_window: SessionWindow,
     query_window: QueryWindow,
 }
 
 impl XingApi {
-    pub async fn new() -> Result<Arc<Self>, Error> {
-        let caller = Arc::new(Caller::new(None)?);
-        let tr_layouts = Arc::new(xingapi_res::load()?);
+    pub async fn new(
+        path: Option<&Path>,
+        layout_tbl: HashMap<String, TrLayout>,
+    ) -> Result<Arc<Self>, Error> {
+        debug_assert!(!layout_tbl.iter().any(|(k, v)| **k != v.code));
 
+        let caller = Arc::new(Caller::new(path)?);
+        let layout_tbl = Arc::new(layout_tbl);
         let session_window = SessionWindow::new(caller.clone()).await?;
-        let query_window = QueryWindow::new(caller.clone(), tr_layouts.clone()).await?;
+        let query_window = QueryWindow::new(caller.clone(), layout_tbl.clone()).await?;
 
-        Ok(Arc::new(XingApi { caller, tr_layouts, session_window, query_window }))
+        Ok(Arc::new(XingApi { caller, layout_tbl, session_window, query_window }))
     }
 
     pub async fn connect(
@@ -172,7 +131,7 @@ pub struct Real {
 impl Real {
     pub async fn new(xingapi: Arc<XingApi>) -> Result<Self, Error> {
         Ok(Self {
-            window: RealWindow::new(xingapi.caller.clone(), xingapi.tr_layouts.clone()).await?,
+            window: RealWindow::new(xingapi.caller.clone(), xingapi.layout_tbl.clone()).await?,
         })
     }
 

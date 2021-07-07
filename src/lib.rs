@@ -34,7 +34,10 @@ use crate::{
     response::{LoginResponse, QueryResponse, RealResponse},
 };
 
-use std::{path::Path, sync::Arc};
+use std::{
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 use xingapi_res::TrLayout;
 
 #[cfg(target_os = "windows")]
@@ -60,18 +63,21 @@ pub struct Account {
 /// 지정된 설정으로 XingAPI를 불러오기 위한 builder입니다.
 #[cfg(any(windows, doc))]
 #[cfg_attr(doc_cfg, doc(cfg(windows)))]
-pub struct XingApiBuilder(#[cfg(windows)] imp::XingApiBuilder);
+pub struct XingApiBuilder {
+    path: Option<PathBuf>,
+    layouts: Vec<TrLayout>,
+}
 
 #[cfg(any(windows, doc))]
 impl XingApiBuilder {
     /// builder를 생성합니다.
     pub fn new() -> Self {
-        Self(imp::XingApiBuilder::new())
+        Self { path: None, layouts: Vec::new() }
     }
 
     /// XingAPI 공유 라이브러리의 경로를 지정합니다.
     pub fn path<P: AsRef<Path>>(mut self, path: P) -> Self {
-        self.0 = self.0.path(path);
+        self.path = Some(path.as_ref().to_owned());
         self
     }
 
@@ -82,13 +88,27 @@ impl XingApiBuilder {
     where
         I: IntoIterator<Item = TrLayout>,
     {
-        self.0 = self.0.layouts(layouts);
+        self.layouts.extend(layouts);
         self
     }
 
     /// `XingApi` 객체를 생성합니다.
     pub async fn build(self) -> Result<Arc<XingApi>, Error> {
-        Ok(Arc::new(XingApi(self.0.build().await?)))
+        #[cfg(not(windows))]
+        unimplemented!();
+
+        #[cfg(windows)]
+        Ok(Arc::new(XingApi(
+            imp::XingApi::new(
+                self.path.as_deref(),
+                if self.layouts.is_empty() {
+                    xingapi_res::load()?
+                } else {
+                    self.layouts.into_iter().map(|i| (i.code.to_owned(), i)).collect()
+                },
+            )
+            .await?,
+        )))
     }
 }
 
@@ -112,7 +132,7 @@ impl XingApi {
         unimplemented!();
 
         #[cfg(windows)]
-        Ok(Arc::new(Self(imp::XingApi::new().await?)))
+        XingApiBuilder::new().build().await
     }
 
     /// 해당하는 설정으로 서버에 연결합니다.
