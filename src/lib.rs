@@ -4,10 +4,10 @@
 //!
 //! 안전성과 간편성, 최적화를 동시에 추구하는 XingAPI 추상화 구현 라이브러리입니다.
 //!
-//! # Requirements
-//! - 이베스트투자증권에서 회원들에게 제공하는 윈도우용 XingAPI 최신 버전
-//! - TR에 필요한 RES (TR 레이아웃) 파일. DevCenter 프로그램에서 전부 다운로드 받을 수 있습니다.
-//! - 비동기 함수를 실행하기 위한 실행자. 이를 위한 라이브러리로는 [async_std][async-std-docs],
+//! # 요구 사항
+//! - 이베스트투자증권의 윈도우용 XingAPI 최신 버전
+//! - RES 파일 (TR 레이아웃). DevCenter 프로그램에서 다운로드 받을 수 있습니다.
+//! - 비동기 함수 실행자. 이를 위한 라이브러리로는 [async_std][async-std-docs],
 //!   [futures][futures-docs], [tokio][tokio-docs] 등이 있습니다.
 //!
 //! async_std보다는 tokio runtime을 사용할 것을 추천합니다. async_std에는 실행자가 종료될 때
