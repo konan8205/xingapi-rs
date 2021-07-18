@@ -132,41 +132,47 @@ pub struct Data {
     pub blocks: HashMap<String, Block>,
 }
 
+#[derive(Clone, Debug, PartialEq)]
+pub(crate) enum RawData {
+    Block(HashMap<String, Vec<u8>>),
+    NonBlock(Vec<u8>),
+}
+
 pub(crate) fn decode(
     tr_layouts: &HashMap<String, TrLayout>,
     tr_code: &str,
-    block_data: HashMap<String, Vec<u8>>,
-    non_block_data: Option<Vec<u8>>,
+    raw_data: RawData,
 ) -> Result<Data, DecodeError> {
     let tr_layout = tr_layouts.get(tr_code).ok_or(DecodeError::UnknownLayout)?;
 
-    if let Some(raw_data) = non_block_data {
-        Ok(decode_non_block(tr_layout, &raw_data)?)
-    } else {
-        let mut data = Data {
-            code: tr_layout.code.to_owned(),
-            data_type: DataType::Output,
-            blocks: HashMap::new(),
-        };
+    match raw_data {
+        RawData::Block(raw_blocks) => {
+            let mut data = Data {
+                code: tr_layout.code.to_owned(),
+                data_type: DataType::Output,
+                blocks: HashMap::new(),
+            };
 
-        for (block_name, raw_data) in block_data {
-            let block_layout = tr_layout
-                .out_blocks
-                .iter()
-                .find(|b| b.name == block_name)
-                .ok_or_else(|| DecodeError::UnknownBlock { name: block_name.to_owned() })?;
+            for (block_name, raw_data) in raw_blocks {
+                let block_layout = tr_layout
+                    .out_blocks
+                    .iter()
+                    .find(|b| b.name == block_name)
+                    .ok_or_else(|| DecodeError::UnknownBlock { name: block_name.to_owned() })?;
 
-            data.blocks.insert(
-                block_name,
-                if block_layout.occurs {
-                    decode_array_block(tr_layout, block_layout, &raw_data)?
-                } else {
-                    decode_block(tr_layout, block_layout, &raw_data)?
-                },
-            );
+                data.blocks.insert(
+                    block_name,
+                    if block_layout.occurs {
+                        decode_array_block(tr_layout, block_layout, &raw_data)?
+                    } else {
+                        decode_block(tr_layout, block_layout, &raw_data)?
+                    },
+                );
+            }
+
+            Ok(data)
         }
-
-        Ok(data)
+        RawData::NonBlock(raw_data) => Ok(decode_non_block(tr_layout, &raw_data)?),
     }
 }
 

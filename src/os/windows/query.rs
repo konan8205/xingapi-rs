@@ -6,7 +6,7 @@ use super::{
     window::Window,
 };
 use crate::{
-    data::{self, Data},
+    data::{self, Data, RawData},
     error::{Error, Win32Error},
     euckr,
     response::QueryResponse,
@@ -18,6 +18,7 @@ use lazy_static::lazy_static;
 
 use std::{
     collections::HashMap,
+    iter::FromIterator,
     ops::DerefMut,
     panic::{RefUnwindSafe, UnwindSafe},
     sync::{
@@ -61,9 +62,7 @@ struct IncompleteResponse {
     message: String,
     elapsed_time: i32,
     continue_key: Option<String>,
-    data_recv: bool,
-    block_data: HashMap<String, Vec<u8>>,
-    non_block_data: Option<Vec<u8>>,
+    data: Option<RawData>,
 }
 
 impl IncompleteResponse {
@@ -73,9 +72,7 @@ impl IncompleteResponse {
             message: String::new(),
             elapsed_time: 0,
             continue_key: None,
-            data_recv: false,
-            block_data: HashMap::new(),
-            non_block_data: None,
+            data: None,
         }
     }
 }
@@ -157,18 +154,12 @@ impl QueryWindow {
         }
 
         if let Some(res) = rx_res.recv().await.unwrap() {
-            let data = if res.data_recv {
-                Some(data::decode(&self.tr_layouts, tr_code, res.block_data, res.non_block_data))
-            } else {
-                None
-            };
-
             Ok(QueryResponse::new(
                 &res.code,
                 &res.message,
                 res.elapsed_time,
                 res.continue_key,
-                data,
+                res.data.map(|d| data::decode(&self.tr_layouts, tr_code, d)),
             ))
         } else {
             Err(Error::TimedOut)
@@ -260,13 +251,18 @@ impl QueryWindow {
                         };
 
                         if let Some(tr_layout) = layout_map.get(tr_code.as_ref()) {
-                            res.data_recv = true;
-
                             if tr_layout.block {
                                 let block_name = euckr::decode(&recv_packet.block_name).to_string();
-                                res.block_data.insert(block_name, raw_data);
-                            } else if res.non_block_data.is_none() {
-                                res.non_block_data = Some(raw_data)
+
+                                if let Some(RawData::Block(blocks)) = &mut res.data {
+                                    blocks.insert(block_name, raw_data);
+                                } else {
+                                    res.data = Some(RawData::Block(HashMap::from_iter([(
+                                        block_name, raw_data,
+                                    )])));
+                                }
+                            } else {
+                                res.data = Some(RawData::NonBlock(raw_data));
                             }
                         }
                     }
